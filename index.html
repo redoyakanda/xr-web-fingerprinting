@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XR Web Fingerprinting Research Platform</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero" aria-labelledby="project-title">
+      <p class="eyebrow">Academic browser measurement foundation</p>
+      <h1 id="project-title">XR Web Fingerprinting Research Platform</h1>
+      <p class="description">
+        This prototype collects browser-exposed navigator, screen, and window
+        properties from XR/WebXR and traditional browsers for reproducible
+        fingerprinting research. It intentionally avoids motion sensor data and
+        advanced fingerprinting surfaces in this foundation phase.
+      </p>
+      <div class="actions" aria-label="Fingerprint actions">
+        <button id="collect-button" class="primary-button" type="button">Collect Fingerprint</button>
+        <button id="copy-button" class="secondary-button" type="button" disabled>Copy JSON</button>
+        <button id="download-button" class="secondary-button" type="button" disabled>Download JSON</button>
+      </div>
+    </section>
+
+    <section class="panel-grid" aria-label="Collection output">
+      <article class="panel status-panel" aria-labelledby="status-heading">
+        <h2 id="status-heading">Status</h2>
+        <div id="status-message" class="status-message" role="status" aria-live="polite">
+          Ready to collect a browser fingerprint.
+        </div>
+        <dl class="status-list">
+          <div>
+            <dt>Enabled modules</dt>
+            <dd>Navigator, Screen, Window</dd>
+          </div>
+          <div>
+            <dt>Excluded modules</dt>
+            <dd>WebGL, Canvas, Audio, WebXR, Permissions, Gamepad, Fonts, Storage, Network</dd>
+          </div>
+        </dl>
+      </article>
+
+      <article class="panel results-panel" aria-labelledby="results-heading">
+        <h2 id="results-heading">Results</h2>
+        <div id="results-summary" class="results-summary">
+          No fingerprint has been collected yet.
+        </div>
+      </article>
+    </section>
+
+    <section class="panel json-panel" aria-labelledby="json-heading">
+      <div class="panel-heading-row">
+        <h2 id="json-heading">JSON Viewer</h2>
+        <span id="json-timestamp" class="timestamp">Not collected</span>
+      </div>
+      <pre id="json-viewer" class="json-viewer" tabindex="0">{}</pre>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
