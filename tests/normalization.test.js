@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { normalizeForJson, stableStringify } from '../js/utils/normalization.js';
+const obj = { b: 1, a: undefined, n: NaN, i: Infinity, bi: 2n, set: new Set([2,1]), map: new Map([['z',1],['a',2]]), err: new Error('x') };
+obj.self = obj;
+const norm = normalizeForJson(obj);
+assert.equal(norm.a.__type, 'undefined');
+assert.equal(norm.n.value, 'NaN');
+assert.equal(norm.i.value, 'Infinity');
+assert.equal(norm.bi.value, '2');
+assert.equal(norm.self.__type, 'circular');
+assert.equal(stableStringify({b:1,a:2}), stableStringify({a:2,b:1}));
+console.log('normalization tests passed');
