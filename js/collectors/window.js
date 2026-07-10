@@ -1,12 +1,12 @@
-import { safeRead } from './utils.js';
+import { createCollectorResult, safeRead } from '../utils/utils.js';
 
 /**
  * Collects passive Window properties that describe the browser viewport.
  *
- * @returns {Object} Serializable window fingerprint data.
+ * @returns {Object} Serializable window fingerprint result.
  */
 export function collectWindowFingerprint() {
-  return {
+  return createCollectorResult('window', typeof window !== 'undefined', {
     innerWidth: safeRead(() => window.innerWidth),
     innerHeight: safeRead(() => window.innerHeight),
     outerWidth: safeRead(() => window.outerWidth),
@@ -23,5 +23,5 @@ export function collectWindowFingerprint() {
       offsetLeft: safeRead(() => window.visualViewport?.offsetLeft),
       offsetTop: safeRead(() => window.visualViewport?.offsetTop),
     },
-  };
+  });
 }

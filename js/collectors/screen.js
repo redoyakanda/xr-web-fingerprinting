@@ -1,14 +1,18 @@
-import { safeRead } from './utils.js';
+import { createCollectorResult, safeRead } from '../utils/utils.js';
 
 /**
  * Collects passive Screen API properties.
  *
- * @returns {Object} Serializable screen fingerprint data.
+ * @returns {Object} Serializable screen fingerprint result.
  */
 export function collectScreenFingerprint() {
   const currentScreen = window.screen;
 
-  return {
+  if (!currentScreen) {
+    return createCollectorResult('screen', false, {}, ['Screen API is unavailable.']);
+  }
+
+  return createCollectorResult('screen', true, {
     width: safeRead(() => currentScreen.width),
     height: safeRead(() => currentScreen.height),
     availableWidth: safeRead(() => currentScreen.availWidth),
@@ -19,5 +23,5 @@ export function collectScreenFingerprint() {
       type: safeRead(() => currentScreen.orientation?.type),
       angle: safeRead(() => currentScreen.orientation?.angle),
     },
-  };
+  });
 }
