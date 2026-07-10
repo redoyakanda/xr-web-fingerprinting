@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>XR Web Fingerprinting Research Platform</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <main class="app-shell">
@@ -12,10 +12,10 @@
       <p class="eyebrow">Academic browser measurement foundation</p>
       <h1 id="project-title">XR Web Fingerprinting Research Platform</h1>
       <p class="description">
-        This prototype collects browser-exposed navigator, screen, and window
+        This prototype collects browser-exposed navigator, screen, window, canvas, and WebGL
         properties from XR/WebXR and traditional browsers for reproducible
-        fingerprinting research. It intentionally avoids motion sensor data and
-        advanced fingerprinting surfaces in this foundation phase.
+        fingerprinting research. It intentionally avoids user input and
+        motion sensor data in this research phase.
       </p>
       <div class="actions" aria-label="Fingerprint actions">
         <button id="collect-button" class="primary-button" type="button">Collect Fingerprint</button>
@@ -33,11 +33,11 @@
         <dl class="status-list">
           <div>
             <dt>Enabled modules</dt>
-            <dd>Navigator, Screen, Window</dd>
+            <dd>Navigator, Screen, Window, Canvas, WebGL</dd>
           </div>
           <div>
             <dt>Excluded modules</dt>
-            <dd>WebGL, Canvas, Audio, WebXR, Permissions, Gamepad, Fonts, Storage, Network</dd>
+            <dd>Audio, WebGPU, WebXR, Permissions, Gamepad, Fonts, Storage, Network, CSS Media Queries, Feature Detection</dd>
           </div>
         </dl>
       </article>
@@ -59,6 +59,6 @@
     </section>
   </main>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="js/core/app.js"></script>
 </body>
 </html>
