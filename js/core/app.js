@@ -1,5 +1,9 @@
 import { collectAudioFingerprint } from '../collectors/audio.js';
 import { collectCanvasFingerprint } from '../collectors/canvas.js';
+import { collectCssMediaFingerprint } from '../collectors/cssMedia.js';
+import { collectFeatureDetectionFingerprint } from '../collectors/featureDetection.js';
+import { collectFontsFingerprint } from '../collectors/fonts.js';
+import { collectGamepadFingerprint } from '../collectors/gamepad.js';
 import { collectNavigatorFingerprint } from '../collectors/navigator.js';
 import { collectNetworkFingerprint } from '../collectors/network.js';
 import { collectPermissionsFingerprint } from '../collectors/permissions.js';
@@ -36,6 +40,10 @@ const collectors = [
   ['permissions', collectPermissionsFingerprint],
   ['storage', collectStorageFingerprint],
   ['network', collectNetworkFingerprint],
+  ['fonts', collectFontsFingerprint],
+  ['cssMedia', collectCssMediaFingerprint],
+  ['featureDetection', collectFeatureDetectionFingerprint],
+  ['gamepad', collectGamepadFingerprint],
 ];
 
 const modules = collectors.map(([name]) => name);
@@ -52,7 +60,7 @@ async function collectFingerprint(onCollectorStatus = () => {}) {
     metadata: {
       project: 'XR Web Fingerprinting Research Platform',
       collectedAt,
-      moduleVersion: 'task-5-passive-browser-info',
+      moduleVersion: 'task-6-passive-browser-surfaces',
       modules,
     },
     ...Object.fromEntries(results),
@@ -87,6 +95,10 @@ elements.collectButton.addEventListener('click', async () => {
       permissions: 'Permissions',
       storage: 'Storage',
       network: 'Network',
+      fonts: 'Fonts',
+      cssMedia: 'CSS Media Queries',
+      featureDetection: 'Feature Detection',
+      gamepad: 'Gamepad',
     };
 
     if (!labels[name]) {
