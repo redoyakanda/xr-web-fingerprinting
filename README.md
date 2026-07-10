@@ -2,7 +2,7 @@
 
 A foundation prototype for studying browser-exposed fingerprinting surfaces in XR/WebXR browsers and traditional desktop browsers.
 
-This project is intended for academic browser measurement research. It does **not** collect user input, does **not** collect motion sensor data, and does **not** implement Audio, WebGPU, WebXR, Permissions, Gamepad, Fonts, Storage, Network, CSS Media Queries, or broad feature-detection collectors in this task.
+This project is intended for academic browser measurement research. It does **not** collect user input, does **not** collect motion sensor data, and does **not** implement WebXR, Permissions, Gamepad, Fonts, Storage, Network, CSS Media Queries, or broad feature-detection collectors in this task.
 
 ## Implemented modules
 
@@ -11,6 +11,8 @@ This project is intended for academic browser measurement research. It does **no
 - `window`: viewport and window dimensions, device pixel ratio, offsets, and visual viewport metadata.
 - `canvas`: deterministic offscreen 2D canvas rendering with hashed image and text outputs, dimensions, and 2D context metadata.
 - `webgl`: WebGL/WebGL2 support, vendor and renderer strings, unmasked debug renderer information when available, extensions, major graphics limits, and shader precision values.
+- `audio`: deterministic Web Audio API rendering with `OfflineAudioContext`, oscillator/compressor processing, sample statistics, and a hash of rendered samples. This module uses generated offline audio only; it does **not** access the microphone, call `getUserMedia`, enumerate media devices, or request audio permissions.
+- `webgpu`: passive WebGPU capability enumeration, including support status, adapter features, adapter limits, adapter info when exposed by the browser, and warnings when WebGPU or adapter metadata is blocked or unavailable. This module does **not** request XR, camera, microphone, or motion-sensor permissions.
 
 Every collector returns a standard JSON object containing a category name, supported status, collected values, warnings, and errors.
 
@@ -30,7 +32,9 @@ Every collector returns a standard JSON object containing a category name, suppo
 │   │   ├── screen.js
 │   │   ├── window.js
 │   │   ├── canvas.js
-│   │   └── webgl.js
+│   │   ├── webgl.js
+│   │   ├── audio.js
+│   │   └── webgpu.js
 │   ├── export/
 │   │   └── jsonExport.js
 │   ├── ui/
@@ -56,4 +60,4 @@ Then visit `http://localhost:8000`, click **Collect Fingerprint**, inspect the p
 
 ## Ethical note
 
-This platform is for transparent, academic fingerprinting research. Canvas and WebGL are included because they are well-known browser fingerprinting surfaces, but the implementation avoids user input collection, permission prompts, and motion sensor data. Any future research protocol should document consent, purpose limitation, and data minimization before adding new collectors.
+This platform is for transparent, academic fingerprinting research. Canvas, WebGL, generated offline audio, and passive WebGPU capability enumeration are included because they are known browser fingerprinting surfaces, but the implementation avoids user input collection, permission prompts, media-device access, XR sessions, and motion sensor data. Any future research protocol should document consent, purpose limitation, and data minimization before adding new collectors.

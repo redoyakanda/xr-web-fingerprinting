@@ -8,23 +8,28 @@ import { createCollectorResult, safeRead } from '../utils/utils.js';
 export function collectWebGLFingerprint() {
   const warnings = [];
   const errors = [];
-  const canvas = document.createElement('canvas');
-  const webgl = getContext(canvas, 'webgl') || getContext(canvas, 'experimental-webgl');
-  const webgl2 = getContext(canvas, 'webgl2');
+  try {
+    const canvas = document.createElement('canvas');
+    const webgl = getContext(canvas, 'webgl') || getContext(canvas, 'experimental-webgl');
+    const webgl2 = getContext(canvas, 'webgl2');
 
-  if (!webgl && !webgl2) {
-    return createCollectorResult('webgl', false, { webglSupported: false, webgl2Supported: false }, ['WebGL APIs are unavailable.'], errors);
+    if (!webgl && !webgl2) {
+      return createCollectorResult('webgl', false, { webglSupported: false, webgl2Supported: false }, ['WebGL APIs are unavailable.'], errors);
+    }
+
+    const primaryContext = webgl2 || webgl;
+    const values = {
+      webglSupported: Boolean(webgl),
+      webgl2Supported: Boolean(webgl2),
+      primaryContext: webgl2 ? 'webgl2' : 'webgl',
+      ...collectContextValues(primaryContext),
+    };
+
+    return createCollectorResult('webgl', true, values, warnings, errors);
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : String(error));
+    return createCollectorResult('webgl', false, {}, warnings, errors);
   }
-
-  const primaryContext = webgl2 || webgl;
-  const values = {
-    webglSupported: Boolean(webgl),
-    webgl2Supported: Boolean(webgl2),
-    primaryContext: webgl2 ? 'webgl2' : 'webgl',
-    ...collectContextValues(primaryContext),
-  };
-
-  return createCollectorResult('webgl', true, values, warnings, errors);
 }
 
 function getContext(canvas, type) {
