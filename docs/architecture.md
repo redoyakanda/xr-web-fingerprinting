@@ -4,7 +4,7 @@ The project is a static browser application organized around small ES modules. T
 
 ## Core controller
 
-`js/core/app.js` owns application flow. It wires button events, calls enabled collectors, adds collection metadata, and merges results into one final fingerprint object with top-level keys for `navigator`, `screen`, `window`, `canvas`, `webgl`, `audio`, and `webgpu`.
+`js/core/app.js` owns application flow. It wires button events, calls enabled collectors, adds collection metadata, and merges results into one final fingerprint object with top-level keys for `navigator`, `screen`, `window`, `canvas`, `webgl`, `audio`, `webgpu`, and `webxr`.
 
 Collectors are registered in a single ordered array of `[moduleName, collectorFunction]` pairs. The controller derives metadata from that array and executes each collector through `runCollector()`, a defensive wrapper that awaits synchronous or asynchronous collectors and converts unexpected exceptions into the standard result envelope. This ensures one failed or unsupported API does not break the full fingerprint collection.
 
@@ -31,12 +31,13 @@ Current collectors are:
 - `webgl.js`: WebGL/WebGL2 support and graphics-stack metadata. WebGL is important because vendor strings, renderer strings, limits, extensions, and shader precision can expose high-entropy differences across devices and drivers.
 - `audio.js`: deterministic offline Web Audio rendering. Audio is important for fingerprinting research because browser audio engines, CPU architectures, floating-point behavior, and signal-processing implementations can produce subtly different rendered samples for the same oscillator/compressor graph. The collector uses `OfflineAudioContext` where supported, hashes generated samples, records sample statistics, and never requests microphone access.
 - `webgpu.js`: passive WebGPU capability enumeration. WebGPU is important because adapter features, limits, and exposed adapter metadata vary across GPU, driver, operating system, browser, and privacy settings. The collector checks `navigator.gpu`, requests an adapter without a device or extra permissions, records features/limits/adapter info when available, and returns warnings instead of throwing when WebGPU is unavailable, experimental, blocked, or privacy-restricted.
+- `webxr.js`: passive WebXR capability enumeration. WebXR availability may reveal whether a browser is XR-capable, session-mode support may distinguish immersive browser environments, and exposed WebXR interfaces/extensions may provide additional fingerprinting features. The collector records secure-context status, `navigator.xr` availability, constructor/prototype exposure for core and optional WebXR interfaces, and `navigator.xr.isSessionSupported()` results for `inline`, `immersive-vr`, and `immersive-ar`. It does **not** call `requestSession()` or read pose, motion, controller movement, hand joints, eye tracking, camera passthrough, depth, hit-test, anchor, plane, mesh, or scene-understanding data.
 
 Collectors should avoid permission prompts, user input collection, motion sensors, and unrelated fingerprinting surfaces unless explicitly added by a future task.
 
 ## Asynchronous collectors
 
-Collectors may be synchronous or asynchronous. For example, `canvas.js` and `audio.js` hash deterministic output with the asynchronous Web Crypto API, while `webgpu.js` awaits `navigator.gpu.requestAdapter()` and optional adapter info APIs. `js/core/app.js` always awaits every collector through `Promise.all()`, so adding an async collector does not require special UI or export handling.
+Collectors may be synchronous or asynchronous. For example, `canvas.js` and `audio.js` hash deterministic output with the asynchronous Web Crypto API, while `webgpu.js` awaits `navigator.gpu.requestAdapter()` and optional adapter info APIs, and `webxr.js` awaits passive `navigator.xr.isSessionSupported()` checks. `js/core/app.js` always awaits every collector through `Promise.all()`, so adding an async collector does not require special UI or export handling.
 
 A collector should still catch API-specific errors internally when it can add useful warnings or fallback values. The core `runCollector()` wrapper is the final safety net for unexpected failures and returns `{ category, supported, values, warnings, errors }` for every module.
 
@@ -61,3 +62,9 @@ A collector should still catch API-specific errors internally when it can add us
 5. Add the module name and function to the `collectors` array; metadata and result merging are derived from that registry.
 6. Update `README.md`, this architecture document, and visible module lists in `index.html` as needed.
 7. Add tests or sample data when a test harness is available.
+
+## WebXR passive capability model
+
+The WebXR collector intentionally distinguishes **interface availability** from **runtime session capability**. Interface availability means constructors such as `XRSystem`, `XRSession`, `XRWebGLLayer`, `XRHand`, or `XRDepthInformation` are exposed on `window`; this can be measured with safe feature detection without activating XR hardware. Runtime session capability means the browser reports whether a session mode such as `inline`, `immersive-vr`, or `immersive-ar` is supported through `navigator.xr.isSessionSupported()`. These session-mode checks are asynchronous but passive and do not create an XR session.
+
+`requestSession()` is intentionally excluded from automatic collection because it can activate immersive XR flows, trigger permission or user-activation requirements, and expose sensor-backed objects such as frames, poses, input sources, hands, hit-test sources, anchors, depth information, or scene/environment data. Keeping WebXR collection passive preserves the project boundary: capability-based fingerprinting research without motion, pose, controller, eye, hand, camera, depth, or scene sensor streams.

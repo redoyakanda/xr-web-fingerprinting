@@ -4,6 +4,7 @@ import { collectNavigatorFingerprint } from '../collectors/navigator.js';
 import { collectScreenFingerprint } from '../collectors/screen.js';
 import { collectWebGLFingerprint } from '../collectors/webgl.js';
 import { collectWebGPUFingerprint } from '../collectors/webgpu.js';
+import { collectWebXRFingerprint } from '../collectors/webxr.js';
 import { collectWindowFingerprint } from '../collectors/window.js';
 import { copyFingerprintJson, downloadFingerprintJson } from '../export/jsonExport.js';
 import { renderFingerprint, renderStatus } from '../ui/renderer.js';
@@ -28,23 +29,24 @@ const collectors = [
   ['webgl', collectWebGLFingerprint],
   ['audio', collectAudioFingerprint],
   ['webgpu', collectWebGPUFingerprint],
+  ['webxr', collectWebXRFingerprint],
 ];
 
 const modules = collectors.map(([name]) => name);
 
 /** Runs all enabled collector modules and merges their standard JSON envelopes. */
-async function collectFingerprint() {
+async function collectFingerprint(onCollectorStatus = () => {}) {
   const collectedAt = createTimestamp();
 
   const results = await Promise.all(
-    collectors.map(async ([name, collector]) => [name, await runCollector(name, collector)]),
+    collectors.map(async ([name, collector]) => [name, await runCollector(name, collector, onCollectorStatus)]),
   );
 
   return {
     metadata: {
       project: 'XR Web Fingerprinting Research Platform',
       collectedAt,
-      moduleVersion: 'task-3-audio-webgpu',
+      moduleVersion: 'task-4-webxr',
       modules,
     },
     ...Object.fromEntries(results),
@@ -52,23 +54,40 @@ async function collectFingerprint() {
 }
 
 /** Keeps one collector failure from aborting the full fingerprint collection. */
-async function runCollector(name, collector) {
+async function runCollector(name, collector, onCollectorStatus = () => {}) {
   try {
-    return await collector();
+    onCollectorStatus(name, 'begin');
+    const result = await collector();
+    onCollectorStatus(name, 'complete', result);
+    return result;
   } catch (error) {
-    return {
+    const fallbackResult = {
       category: name,
       supported: false,
       values: {},
       warnings: [],
       errors: [error instanceof Error ? error.message : String(error)],
     };
+    onCollectorStatus(name, 'complete', fallbackResult);
+    return fallbackResult;
   }
 }
 
 elements.collectButton.addEventListener('click', async () => {
   renderStatus('Collecting fingerprint...', elements);
-  latestFingerprint = await collectFingerprint();
+  latestFingerprint = await collectFingerprint((name, phase, result) => {
+    if (name !== 'webxr') {
+      return;
+    }
+
+    if (phase === 'begin') {
+      renderStatus('WebXR collection begins: passively checking browser-exposed XR capabilities...', elements);
+    }
+
+    if (phase === 'complete') {
+      renderStatus(`WebXR collection complete. WebXR supported: ${result.supported ? 'yes' : 'no'}.`, elements);
+    }
+  });
   renderFingerprint(latestFingerprint, elements);
 });
 
