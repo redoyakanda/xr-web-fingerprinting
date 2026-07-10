@@ -1,0 +1,1 @@
+{"type":"module","scripts":{"test":"node tests/schema.test.js && node tests/normalization.test.js && node tests/comparison.test.js"},"devDependencies":{}}

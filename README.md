@@ -1,79 +1,61 @@
 # XR Web Fingerprinting Research Platform
 
-A foundation prototype for studying browser-exposed fingerprinting surfaces in XR/WebXR browsers and traditional desktop browsers.
+A static, vanilla JavaScript research prototype for observing browser-exposed fingerprinting features in desktop and XR browsers. All collection, export, import, filtering, and comparison occur locally in the browser; the page has no backend, analytics, CDN dependencies, or automatic data submission.
 
-This project is intended for academic browser measurement research. It does **not** collect user input, does **not** collect motion sensor data, and implements passive Gamepad, Fonts, CSS Media Queries, and broad feature-detection collectors without requesting permissions or activating sensitive devices.
+## Research scope
 
-## Implemented modules
-
-- `navigator`: passive Navigator API properties such as user agent, platform, languages, touch points, and hardware concurrency.
-- `screen`: Screen API dimensions, color depth, pixel depth, and orientation metadata.
-- `window`: viewport and window dimensions, device pixel ratio, offsets, and visual viewport metadata.
-- `canvas`: deterministic offscreen 2D canvas rendering with hashed image and text outputs, dimensions, and 2D context metadata.
-- `webgl`: WebGL/WebGL2 support, vendor and renderer strings, unmasked debug renderer information when available, extensions, major graphics limits, and shader precision values.
-- `audio`: deterministic Web Audio API rendering with `OfflineAudioContext`, oscillator/compressor processing, sample statistics, and a hash of rendered samples. This module uses generated offline audio only; it does **not** access the microphone, call `getUserMedia`, enumerate media devices, or request audio permissions.
-- `webgpu`: passive WebGPU capability enumeration, including support status, adapter features, adapter limits, adapter info when exposed by the browser, and warnings when WebGPU or adapter metadata is blocked or unavailable. This module does **not** request XR, camera, microphone, or motion-sensor permissions.
-- `webxr`: passive WebXR capability enumeration, including secure-context status, `navigator.xr` availability, browser-exposed WebXR constructor/prototype availability, and `isSessionSupported()` results for `inline`, `immersive-vr`, and `immersive-ar`. This module does **not** call `requestSession()`, request immersive sessions, request XR permissions, or collect motion, pose, orientation, eye, hand, controller, camera passthrough, depth, hit-test, anchor, scene-understanding, or other behavioral/environment sensor streams. Some WebXR capabilities may be hidden until a site explicitly requests a session, so this module intentionally measures only passively exposed capabilities.
-- `permissions`: passive Permissions API state checks. It only reads browser-reported permission states with `navigator.permissions.query()` where supported; it does **not** request permissions or access protected resources such as camera, microphone, geolocation, clipboard, or sensors.
-- `storage`: passive storage capability checks for web storage, IndexedDB, Cache API, StorageManager, cookies, service workers, worker/channel interfaces, file-system interfaces, and OPFS exposure. Temporary project-specific artifacts prefixed with `xr-web-fingerprinting-test-` are created only when needed and are removed immediately; existing origin data is not enumerated or read.
-- `network`: passive Network Information API and related network-interface availability checks. It does **not** perform speed tests, send probe traffic, discover IP addresses, create WebRTC peer connections, or probe local-network resources.
-- `fonts`: controlled font availability estimates for a predefined list only, separated into platform-common, XR/vendor candidate, and generic CSS families. It uses `document.fonts.check()` when available or a temporary offscreen width fallback that is removed immediately and may produce false positives. It never calls `queryLocalFonts()` and never requests local-font permissions.
-- `cssMedia`: fixed `window.matchMedia()` checks for color/appearance, motion/accessibility, input capability, display mode, scripting, and update media queries. These browser-exposed preferences and capabilities can reveal device, display, and accessibility characteristics; the collector does not attach persistent listeners.
-- `featureDetection`: safe API/interface presence checks grouped by platform, graphics, media, XR, input, storage/execution, connectivity, device-access, file/clipboard, and security categories. It does not instantiate sensitive interfaces or invoke permission prompts.
-- `gamepad`: one passive `navigator.getGamepads()` snapshot of static/coarse controller metadata only. It records IDs, mapping, counts, actuator metadata, and timestamp presence, but never records axes values, button state/value, pose, movement, orientation, repeated samples, or controller behavior.
-
-Every collector returns a standard JSON object containing a category name, supported status, collected values, warnings, and errors.
+The platform records a passive local collection result across existing collectors: navigator, screen, window, canvas, WebGL, audio, WebGPU, WebXR, permissions, storage, network, fonts, CSS media queries, feature detection, and gamepad. It does not add motion, pose, camera, microphone, geolocation, IP discovery, WebRTC probing, local-font enumeration, or behavioral collection.
 
 ## Project structure
 
-```text
-/
-├── index.html
-├── README.md
-├── css/
-│   └── style.css
-├── js/
-│   ├── core/
-│   │   └── app.js
-│   ├── collectors/
-│   │   ├── navigator.js
-│   │   ├── screen.js
-│   │   ├── window.js
-│   │   ├── canvas.js
-│   │   ├── webgl.js
-│   │   ├── audio.js
-│   │   ├── webgpu.js
-│   │   ├── webxr.js
-│   │   ├── permissions.js
-│   │   ├── storage.js
-│   │   ├── network.js
-│   │   ├── fonts.js
-│   │   ├── cssMedia.js
-│   │   ├── featureDetection.js
-│   │   └── gamepad.js
-│   ├── export/
-│   │   └── jsonExport.js
-│   ├── ui/
-│   │   └── renderer.js
-│   └── utils/
-│       └── utils.js
-├── docs/
-│   └── architecture.md
-├── data/
-│   └── samples/
-└── tests/
-```
+- `index.html` – static dashboard shell.
+- `css/style.css` – responsive, accessible dashboard styling.
+- `js/core/app.js` – application lifecycle, collector orchestration, timeouts, and UI events.
+- `js/collectors/` – passive collector modules.
+- `js/ui/` – rendering, summaries, filtering, and comparison.
+- `js/export/jsonExport.js` – copy/download helpers.
+- `js/utils/` – normalization, stable serialization, and hashing helpers.
+- `docs/` – architecture, methodology, schema, testing, and ethics notes.
+- `tests/` – development-time Node tests for static modules.
 
-## How to run locally
+## Local development
 
-Because the app uses JavaScript modules, serve the repository with a static file server instead of opening the file directly:
+No build step is required. Serve the repository with any static server so browser module imports work:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Then visit `http://localhost:8000`, click **Collect Fingerprint**, inspect the pretty JSON viewer, and use **Copy JSON** or **Download JSON** to export the result.
+Then open `http://localhost:8000/`. Development tests can be run with Node:
 
-## Ethical note
+```bash
+node tests/schema.test.js
+node tests/normalization.test.js
+node tests/comparison.test.js
+```
 
-This platform is for transparent, academic fingerprinting research. Canvas, WebGL, generated offline audio, passive WebGPU capability enumeration, passive WebXR capability enumeration, permission-state reads, storage capability checks, and coarse network capability reads are included because they are known browser fingerprinting surfaces, but the implementation avoids user input collection, permission prompts, media-device access, XR sessions, motion sensor data, pose data, eye tracking, hand tracking, controller movement, or environment-sensing streams. No motion sensor data is collected. No arbitrary font enumeration occurs, no sensitive device API is activated, no controller behavior is recorded, no third-party scripts are used, and collection remains local with no data upload. No fingerprint data is uploaded remotely; collection occurs locally in the browser, and users can inspect, copy, or download the resulting JSON. No protected resource is accessed merely because permission is granted. Any future research protocol should document consent, purpose limitation, and data minimization before adding new collectors.
+Node is only used for tests; the deployed webpage remains fully static.
+
+## GitHub Pages deployment
+
+Enable Pages for the repository branch and root directory. Because the artifact uses relative paths and no server APIs, it can be hosted directly by GitHub Pages or any static file server.
+
+## Testing on XR browsers
+
+Host over HTTPS or `localhost`, open the URL in the target XR browser, collect a fingerprint, export JSON, then repeat under the protocols in `docs/methodology.md`. Suggested targets include Meta Quest Browser, Apple Vision Pro Safari, Pico Browser, and desktop Chrome/Edge/Firefox/Safari.
+
+## Exporting and comparison
+
+Use **Download JSON** for a full local result or **Download Summary** for metadata and per-collector status only. Use **Import JSON for Comparison** to compare the current result against another JSON file locally. Similarity is documented as identical comparable fields divided by total comparable fields, excludes volatile metadata by default, and is not an entropy or uniqueness metric.
+
+## Privacy and ethics
+
+The project is a research prototype. It avoids remote upload, third-party scripts, analytics, hidden identifiers, automatic persistent storage, camera, microphone, geolocation, motion sensors, and WebRTC IP discovery. Obtain appropriate consent and IRB/ethics review before collecting data from human participants.
+
+## Current limitations and compatibility
+
+Unsupported APIs are reported as unsupported or partial results. WebXR/WebGPU often require HTTPS, flags, hardware support, or browser-specific enablement. Permission states may be unavailable or inconsistent. The observed feature vector should not be treated as a unique or permanent device identifier.
+
+## Contributing
+
+Keep the app static and dependency-free. Do not add sensitive collectors or permission prompts without documented ethics review. Update docs and tests whenever schemas or UI behavior change.

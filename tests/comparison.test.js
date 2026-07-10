@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import { compareFingerprints, createComparisonReport, validateFingerprintJson } from '../js/ui/comparison.js';
+const base = { schemaVersion:'1.0.0', collectionId:'a', collectedAtUTC:'t1', collectors:{ webxr:{supported:false,values:{x:null},warnings:['w'],errors:[]}, canvas:{supported:true,values:{arr:[1,2], ok:true},warnings:[],errors:[]} } };
+const same = structuredClone(base); same.collectionId='b'; same.collectedAtUTC='t2';
+validateFingerprintJson(base);
+let cmp = compareFingerprints(base, same);
+assert.equal(cmp.summary.changed, 0);
+assert.equal(cmp.summary.similarityPercentage, 100);
+const changed = structuredClone(base); changed.collectors.canvas.values.arr[1]=3; delete changed.collectors.webxr.values.x; changed.collectors.canvas.values.extra='new';
+cmp = compareFingerprints(base, changed);
+assert.ok(cmp.summary.changed >= 1);
+assert.ok(cmp.summary.currentOnly >= 1 || cmp.summary.importedOnly >= 1);
+assert.ok(cmp.rows.some(r => r.path.includes('arr[1]') && r.result === 'changed'));
+const report = createComparisonReport(cmp, { imported: '/tmp/other.json' });
+assert.equal(report.sourceFilenames.imported, 'other.json');
+console.log('comparison tests passed');

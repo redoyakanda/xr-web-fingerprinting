@@ -1,132 +1,21 @@
-import { collectAudioFingerprint } from '../collectors/audio.js';
-import { collectCanvasFingerprint } from '../collectors/canvas.js';
-import { collectCssMediaFingerprint } from '../collectors/cssMedia.js';
-import { collectFeatureDetectionFingerprint } from '../collectors/featureDetection.js';
-import { collectFontsFingerprint } from '../collectors/fonts.js';
-import { collectGamepadFingerprint } from '../collectors/gamepad.js';
-import { collectNavigatorFingerprint } from '../collectors/navigator.js';
-import { collectNetworkFingerprint } from '../collectors/network.js';
-import { collectPermissionsFingerprint } from '../collectors/permissions.js';
-import { collectScreenFingerprint } from '../collectors/screen.js';
-import { collectWebGLFingerprint } from '../collectors/webgl.js';
-import { collectWebGPUFingerprint } from '../collectors/webgpu.js';
-import { collectWebXRFingerprint } from '../collectors/webxr.js';
-import { collectStorageFingerprint } from '../collectors/storage.js';
-import { collectWindowFingerprint } from '../collectors/window.js';
-import { copyFingerprintJson, downloadFingerprintJson } from '../export/jsonExport.js';
-import { renderFingerprint, renderStatus } from '../ui/renderer.js';
-import { createTimestamp } from '../utils/utils.js';
+import { collectAudioFingerprint } from '../collectors/audio.js';import { collectCanvasFingerprint } from '../collectors/canvas.js';import { collectCssMediaFingerprint } from '../collectors/cssMedia.js';import { collectFeatureDetectionFingerprint } from '../collectors/featureDetection.js';import { collectFontsFingerprint } from '../collectors/fonts.js';import { collectGamepadFingerprint } from '../collectors/gamepad.js';import { collectNavigatorFingerprint } from '../collectors/navigator.js';import { collectNetworkFingerprint } from '../collectors/network.js';import { collectPermissionsFingerprint } from '../collectors/permissions.js';import { collectScreenFingerprint } from '../collectors/screen.js';import { collectWebGLFingerprint } from '../collectors/webgl.js';import { collectWebGPUFingerprint } from '../collectors/webgpu.js';import { collectWebXRFingerprint } from '../collectors/webxr.js';import { collectStorageFingerprint } from '../collectors/storage.js';import { collectWindowFingerprint } from '../collectors/window.js';
+import { copyFingerprintJson, copySummary, downloadFingerprintJson, downloadJson } from '../export/jsonExport.js';
+import { renderComparison, renderFilteredRows, renderFingerprint, renderStatus, updateProgress } from '../ui/renderer.js';
+import { buildFingerprint } from '../ui/summary.js';
+import { compareFingerprints, createComparisonReport, validateFingerprintJson } from '../ui/comparison.js';
 
-const elements = {
-  collectButton: document.querySelector('#collect-button'),
-  copyButton: document.querySelector('#copy-button'),
-  downloadButton: document.querySelector('#download-button'),
-  statusMessage: document.querySelector('#status-message'),
-  resultsSummary: document.querySelector('#results-summary'),
-  jsonViewer: document.querySelector('#json-viewer'),
-  jsonTimestamp: document.querySelector('#json-timestamp'),
-};
-
-let latestFingerprint = null;
-const collectors = [
-  ['navigator', collectNavigatorFingerprint],
-  ['screen', collectScreenFingerprint],
-  ['window', collectWindowFingerprint],
-  ['canvas', collectCanvasFingerprint],
-  ['webgl', collectWebGLFingerprint],
-  ['audio', collectAudioFingerprint],
-  ['webgpu', collectWebGPUFingerprint],
-  ['webxr', collectWebXRFingerprint],
-  ['permissions', collectPermissionsFingerprint],
-  ['storage', collectStorageFingerprint],
-  ['network', collectNetworkFingerprint],
-  ['fonts', collectFontsFingerprint],
-  ['cssMedia', collectCssMediaFingerprint],
-  ['featureDetection', collectFeatureDetectionFingerprint],
-  ['gamepad', collectGamepadFingerprint],
-];
-
-const modules = collectors.map(([name]) => name);
-
-/** Runs all enabled collector modules and merges their standard JSON envelopes. */
-async function collectFingerprint(onCollectorStatus = () => {}) {
-  const collectedAt = createTimestamp();
-
-  const results = await Promise.all(
-    collectors.map(async ([name, collector]) => [name, await runCollector(name, collector, onCollectorStatus)]),
-  );
-
-  return {
-    metadata: {
-      project: 'XR Web Fingerprinting Research Platform',
-      collectedAt,
-      moduleVersion: 'task-6-passive-browser-surfaces',
-      modules,
-    },
-    ...Object.fromEntries(results),
-  };
-}
-
-/** Keeps one collector failure from aborting the full fingerprint collection. */
-async function runCollector(name, collector, onCollectorStatus = () => {}) {
-  try {
-    onCollectorStatus(name, 'begin');
-    const result = await collector();
-    onCollectorStatus(name, 'complete', result);
-    return result;
-  } catch (error) {
-    const fallbackResult = {
-      category: name,
-      supported: false,
-      values: {},
-      warnings: [],
-      errors: [error instanceof Error ? error.message : String(error)],
-    };
-    onCollectorStatus(name, 'complete', fallbackResult);
-    return fallbackResult;
-  }
-}
-
-elements.collectButton.addEventListener('click', async () => {
-  renderStatus('Collecting fingerprint...', elements);
-  latestFingerprint = await collectFingerprint((name, phase, result) => {
-    const labels = {
-      webxr: 'WebXR',
-      permissions: 'Permissions',
-      storage: 'Storage',
-      network: 'Network',
-      fonts: 'Fonts',
-      cssMedia: 'CSS Media Queries',
-      featureDetection: 'Feature Detection',
-      gamepad: 'Gamepad',
-    };
-
-    if (!labels[name]) {
-      return;
-    }
-
-    if (phase === 'begin') {
-      renderStatus(`${labels[name]} collection begins: passively checking browser-exposed capabilities...`, elements);
-    }
-
-    if (phase === 'complete') {
-      const warningCount = result.warnings?.length ?? 0;
-      const warningText = warningCount > 0 ? ` Non-fatal warnings: ${warningCount}.` : '';
-      renderStatus(`${labels[name]} collection complete. Supported: ${result.supported ? 'yes' : 'no'}.${warningText}`, elements);
-    }
-  });
-  renderFingerprint(latestFingerprint, elements);
-});
-
-elements.downloadButton.addEventListener('click', () => {
-  if (latestFingerprint) {
-    downloadFingerprintJson(latestFingerprint);
-  }
-});
-
-elements.copyButton.addEventListener('click', async () => {
-  if (latestFingerprint) {
-    await copyFingerprintJson(latestFingerprint);
-    renderStatus('Fingerprint JSON copied to clipboard.', elements);
-  }
-});
+const $ = (id) => document.querySelector(id); const elements = {
+ collectButton:$('#collect-button'), recollectButton:$('#recollect-button'), clearButton:$('#clear-button'), copyButton:$('#copy-button'), copySummaryButton:$('#copy-summary-button'), downloadButton:$('#download-button'), downloadSummaryButton:$('#download-summary-button'), importInput:$('#import-input'), debugToggle:$('#debug-toggle'), statusMessage:$('#status-message'), progress:$('#progress'), currentCollector:$('#current-collector'), completedCount:$('#completed-count'), warningCount:$('#warning-count'), errorCount:$('#error-count'), completedAt:$('#completed-at'), summaryCards:$('#summary-cards'), categoryNav:$('#category-nav'), structuredToggle:$('#structured-toggle'), rawToggle:$('#raw-toggle'), searchInput:$('#search-input'), filterSelect:$('#filter-select'), clearFilters:$('#clear-filters'), filterCount:$('#filter-count'), structuredView:$('#structured-view'), jsonViewer:$('#json-viewer'), includeVolatile:$('#include-volatile'), showIdentical:$('#show-identical'), onlyDifferences:$('#only-differences'), comparisonSummary:$('#comparison-summary'), comparisonTable:$('#comparison-table'), downloadComparisonButton:$('#download-comparison-button'), copyFeedback:$('#copy-feedback') };
+const collectors = [['navigator',collectNavigatorFingerprint],['screen',collectScreenFingerprint],['window',collectWindowFingerprint],['canvas',collectCanvasFingerprint],['webgl',collectWebGLFingerprint],['audio',collectAudioFingerprint],['webgpu',collectWebGPUFingerprint],['webxr',collectWebXRFingerprint],['permissions',collectPermissionsFingerprint],['storage',collectStorageFingerprint],['network',collectNetworkFingerprint],['fonts',collectFontsFingerprint],['cssMedia',collectCssMediaFingerprint],['featureDetection',collectFeatureDetectionFingerprint],['gamepad',collectGamepadFingerprint]];
+let latestFingerprint=null, importedFingerprint=null, importedFilename=null, latestComparison=null, isCollecting=false, changedPaths=new Set();
+async function collectFingerprint(){ if(isCollecting) return; isCollecting=true; elements.collectButton.disabled=true; elements.recollectButton.disabled=true; const startedAt=new Date(); const results={}; let completed=0,warnings=0,errors=0; updateProgress(elements,{total:collectors.length}); for(const [name,collector] of collectors){ updateProgress(elements,{current:name,completed,total:collectors.length,warnings,errors}); results[name]=await runCollector(name,collector, elements.debugToggle.checked); completed++; warnings+=(results[name].warnings||[]).length; errors+=(results[name].errors||[]).length; updateProgress(elements,{current:name,completed,total:collectors.length,warnings,errors}); await new Promise(requestAnimationFrame); } latestFingerprint=buildFingerprint({collectorResults:results,startedAt,endedAt:new Date(),debugMode:elements.debugToggle.checked}); renderFingerprint(latestFingerprint,elements,{search:elements.searchInput.value,filter:elements.filterSelect.value,changedPaths}); isCollecting=false; elements.collectButton.disabled=false; elements.recollectButton.disabled=false; maybeCompare(); }
+async function runCollector(name,collector,debugMode){ const start=performance.now(); try{ const result=await withTimeout(Promise.resolve().then(collector),10000,name); return {...result,durationMs:Math.round(performance.now()-start)}; }catch(error){ return {category:name,supported:false,values:{},warnings:[],errors:[{collector:name,message:error.message||String(error),type:error.name||'CollectorError',stage:error.name==='TimeoutError'?'timeout':'collection',continued:true,stack:debugMode?error.stack:undefined}],durationMs:Math.round(performance.now()-start),timedOut:error.name==='TimeoutError'}; } }
+function withTimeout(promise,ms,name){ return new Promise((resolve,reject)=>{ const id=setTimeout(()=>{const e=new Error(`${name} collector timed out after ${ms} ms`); e.name='TimeoutError'; reject(e);},ms); promise.then((v)=>{clearTimeout(id);resolve(v);},(e)=>{clearTimeout(id);reject(e);}); }); }
+function maybeCompare(){ if(!latestFingerprint||!importedFingerprint) return; latestComparison=compareFingerprints(latestFingerprint, importedFingerprint,{includeVolatile:elements.includeVolatile.checked}); changedPaths=new Set(latestComparison.rows.filter(r=>['changed','only in current','only in imported'].includes(r.result)).map(r=>r.path)); renderComparison(latestComparison,elements,{showIdentical:elements.showIdentical.checked,onlyDifferences:elements.onlyDifferences.checked}); renderFilteredRows(latestFingerprint,elements,{search:elements.searchInput.value,filter:elements.filterSelect.value,changedPaths}); }
+elements.collectButton.addEventListener('click',collectFingerprint); elements.recollectButton.addEventListener('click',collectFingerprint); elements.clearButton.addEventListener('click',()=>{latestFingerprint=null; elements.structuredView.textContent='No fingerprint has been collected yet.'; elements.jsonViewer.textContent='{}'; elements.summaryCards.innerHTML=''; [elements.copyButton,elements.copySummaryButton,elements.downloadButton,elements.downloadSummaryButton].forEach(b=>b.disabled=true); renderStatus('Current result cleared.',elements);});
+elements.copyButton.addEventListener('click',()=>action(()=>copyFingerprintJson(latestFingerprint),'Copied JSON.')); elements.copySummaryButton.addEventListener('click',()=>action(()=>copySummary(latestFingerprint),'Copied summary.')); elements.downloadButton.addEventListener('click',()=>latestFingerprint&&downloadFingerprintJson(latestFingerprint)); elements.downloadSummaryButton.addEventListener('click',()=>latestFingerprint&&downloadFingerprintJson(latestFingerprint,'summary'));
+elements.importInput.addEventListener('change',async(e)=>{ const file=e.target.files?.[0]; if(!file) return; try{ importedFilename=file.name; importedFingerprint=JSON.parse(await file.text()); validateFingerprintJson(importedFingerprint); renderStatus(`Imported ${file.name} locally for comparison.`,elements); maybeCompare(); }catch(err){ importedFingerprint=null; renderStatus(`Import failed: ${err.message}`,elements); }});
+[elements.includeVolatile,elements.showIdentical,elements.onlyDifferences].forEach(el=>el.addEventListener('change',maybeCompare)); elements.downloadComparisonButton.addEventListener('click',()=>{ if(latestComparison) downloadJson(createComparisonReport(latestComparison,{current:'current fingerprint',imported:importedFilename}),`comparison-report_${new Date().toISOString()}.json`,'comparison'); });
+[elements.searchInput,elements.filterSelect].forEach(el=>el.addEventListener('input',()=>latestFingerprint&&renderFilteredRows(latestFingerprint,elements,{search:elements.searchInput.value,filter:elements.filterSelect.value,changedPaths}))); elements.clearFilters.addEventListener('click',()=>{elements.searchInput.value='';elements.filterSelect.value='all'; if(latestFingerprint) renderFilteredRows(latestFingerprint,elements,{changedPaths});});
+elements.structuredToggle.addEventListener('click',()=>{elements.structuredView.hidden=false;elements.jsonViewer.hidden=true;}); elements.rawToggle.addEventListener('click',()=>{elements.structuredView.hidden=true;elements.jsonViewer.hidden=false;});
+async function action(fn,msg){ try{ await fn(); elements.copyFeedback.textContent=msg; }catch(e){ elements.copyFeedback.textContent=`Action failed: ${e.message}`; } }

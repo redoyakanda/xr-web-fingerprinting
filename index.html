@@ -1,64 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>XR Web Fingerprinting Research Platform</title>
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-  <main class="app-shell">
-    <section class="hero" aria-labelledby="project-title">
-      <p class="eyebrow">Academic browser measurement foundation</p>
-      <h1 id="project-title">XR Web Fingerprinting Research Platform</h1>
-      <p class="description">
-        This prototype collects browser-exposed navigator, screen, window, canvas, WebGL, audio, WebGPU, WebXR, permissions, storage, network, fonts, CSS media query, feature-detection, and gamepad metadata
-        properties from XR/WebXR and traditional browsers for reproducible
-        fingerprinting research. It intentionally avoids user input and
-        motion sensor data in this research phase.
-      </p>
-      <div class="actions" aria-label="Fingerprint actions">
-        <button id="collect-button" class="primary-button" type="button">Collect Fingerprint</button>
-        <button id="copy-button" class="secondary-button" type="button" disabled>Copy JSON</button>
-        <button id="download-button" class="secondary-button" type="button" disabled>Download JSON</button>
-      </div>
-    </section>
-
-    <section class="panel-grid" aria-label="Collection output">
-      <article class="panel status-panel" aria-labelledby="status-heading">
-        <h2 id="status-heading">Status</h2>
-        <div id="status-message" class="status-message" role="status" aria-live="polite">
-          Ready to collect a browser fingerprint.
-        </div>
-        <dl class="status-list">
-          <div>
-            <dt>Enabled modules</dt>
-            <dd>Navigator, Screen, Window, Canvas, WebGL, Audio, WebGPU, WebXR, Permissions, Storage, Network, Fonts, CSS Media Queries, Feature Detection, Gamepad</dd>
-          </div>
-          <div>
-            <dt>Excluded modules</dt>
-            <dd>Motion sensors, XR pose/orientation, eye tracking, hand tracking, controller movement, camera, microphone, geolocation, IP address, behavioral data</dd>
-          </div>
-        </dl>
-      </article>
-
-      <article class="panel results-panel" aria-labelledby="results-heading">
-        <h2 id="results-heading">Results</h2>
-        <div id="results-summary" class="results-summary">
-          No fingerprint has been collected yet.
-        </div>
-      </article>
-    </section>
-
-    <section class="panel json-panel" aria-labelledby="json-heading">
-      <div class="panel-heading-row">
-        <h2 id="json-heading">JSON Viewer</h2>
-        <span id="json-timestamp" class="timestamp">Not collected</span>
-      </div>
-      <pre id="json-viewer" class="json-viewer" tabindex="0">{}</pre>
-    </section>
-  </main>
-
-  <script type="module" src="js/core/app.js"></script>
-</body>
-</html>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>XR Web Fingerprinting Research Dashboard</title><link rel="stylesheet" href="css/style.css"></head><body>
+<header class="site-header"><div><p class="eyebrow">Version <span id="app-version">0.7.0</span> · static research prototype</p><h1>XR Web Fingerprinting Research Platform</h1><p class="description">A local dashboard for studying browser-exposed fingerprinting features in XR and desktop browsers as an observed feature vector.</p><p class="privacy-notice">All collection and comparison occur locally in your browser.</p></div></header>
+<main class="dashboard">
+<section class="panel controls" aria-labelledby="controls-heading"><h2 id="controls-heading">Collection controls</h2><div class="button-row"><button id="collect-button" class="primary-button">Collect Fingerprint</button><button id="recollect-button">Recollect Fingerprint</button><button id="clear-button">Clear Current Result</button><button id="copy-button" disabled>Copy JSON</button><button id="copy-summary-button" disabled>Copy Summary</button><button id="download-button" disabled>Download JSON</button><button id="download-summary-button" disabled>Download Summary</button><label class="file-button">Import JSON for Comparison<input id="import-input" type="file" accept="application/json,.json"></label></div><label class="check"><input id="debug-toggle" type="checkbox"> Debug mode (local stack display only)</label><div id="copy-feedback" role="status" aria-live="polite"></div></section>
+<section class="panel status-panel" aria-labelledby="status-heading"><h2 id="status-heading">Collection status</h2><progress id="progress" max="15" value="0"></progress><dl class="status-grid"><div><dt>Current collector</dt><dd id="current-collector">Idle</dd></div><div><dt>Completed</dt><dd id="completed-count">0 / 15</dd></div><div><dt>Warnings</dt><dd id="warning-count">0</dd></div><div><dt>Errors</dt><dd id="error-count">0</dd></div><div><dt>Completed at</dt><dd id="completed-at">Not collected</dd></div></dl><p id="status-message" role="status" aria-live="polite">Ready to collect a local collection result.</p></section>
+<section id="summary-cards" class="summary-cards" aria-label="Summary cards"></section>
+<section class="workspace"><nav class="panel sidebar" aria-label="Category navigation"><h2>Collectors</h2><div id="category-nav"></div></nav><section class="panel results-panel"><div class="panel-heading-row"><h2>Results view</h2><div><button id="structured-toggle" aria-pressed="true">Structured</button><button id="raw-toggle" aria-pressed="false">Raw JSON</button></div></div><div class="filters"><input id="search-input" type="search" placeholder="Search category, JSON path, or value" aria-label="Search results"><select id="filter-select" aria-label="Filter results"><option value="all">All</option><option value="supported">Supported</option><option value="unsupported">Unsupported</option><option value="warnings">Warnings</option><option value="errors">Errors</option><option value="xr">XR-related</option><option value="graphics">Graphics-related</option><option value="privacy">Privacy-related</option><option value="changed">Changed fields in comparison</option></select><button id="clear-filters">Clear Filters</button><span id="filter-count">0 / 0 fields</span></div><div id="structured-view">No fingerprint has been collected yet.</div><pre id="json-viewer" class="json-viewer" hidden tabindex="0">{}</pre></section></section>
+<section class="panel comparison-panel" aria-labelledby="comparison-heading"><div class="panel-heading-row"><h2 id="comparison-heading">Fingerprint comparison</h2><button id="download-comparison-button" disabled>Download Comparison Report</button></div><p class="help">Similarity is identical comparable fields divided by total comparable fields. It excludes volatile metadata by default and is not entropy or uniqueness.</p><div class="button-row"><label class="check"><input id="include-volatile" type="checkbox"> Include volatile metadata</label><label class="check"><input id="show-identical" type="checkbox"> Show identical fields</label><label class="check"><input id="only-differences" type="checkbox" checked> Show only differences</label></div><div id="comparison-summary">Import a JSON fingerprint after collecting a current result.</div><div id="comparison-table" class="comparison-table"></div></section>
+</main><script type="module" src="js/core/app.js"></script></body></html>

@@ -41,16 +41,4 @@ export function createCollectorResult(category, supported, values = {}, warnings
   };
 }
 
-/** Creates a stable SHA-256 hash for deterministic fingerprint payloads. */
-export async function sha256Hash(value) {
-  if (!window.crypto?.subtle) {
-    throw new Error('Web Crypto API is unavailable for hashing.');
-  }
-
-  const encoded = new TextEncoder().encode(String(value));
-  const digest = await window.crypto.subtle.digest('SHA-256', encoded);
-
-  return Array.from(new Uint8Array(digest))
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('');
-}
+export { sha256Hash } from './hashing.js';
