@@ -1,10 +1,13 @@
 import { collectAudioFingerprint } from '../collectors/audio.js';
 import { collectCanvasFingerprint } from '../collectors/canvas.js';
 import { collectNavigatorFingerprint } from '../collectors/navigator.js';
+import { collectNetworkFingerprint } from '../collectors/network.js';
+import { collectPermissionsFingerprint } from '../collectors/permissions.js';
 import { collectScreenFingerprint } from '../collectors/screen.js';
 import { collectWebGLFingerprint } from '../collectors/webgl.js';
 import { collectWebGPUFingerprint } from '../collectors/webgpu.js';
 import { collectWebXRFingerprint } from '../collectors/webxr.js';
+import { collectStorageFingerprint } from '../collectors/storage.js';
 import { collectWindowFingerprint } from '../collectors/window.js';
 import { copyFingerprintJson, downloadFingerprintJson } from '../export/jsonExport.js';
 import { renderFingerprint, renderStatus } from '../ui/renderer.js';
@@ -30,6 +33,9 @@ const collectors = [
   ['audio', collectAudioFingerprint],
   ['webgpu', collectWebGPUFingerprint],
   ['webxr', collectWebXRFingerprint],
+  ['permissions', collectPermissionsFingerprint],
+  ['storage', collectStorageFingerprint],
+  ['network', collectNetworkFingerprint],
 ];
 
 const modules = collectors.map(([name]) => name);
@@ -46,7 +52,7 @@ async function collectFingerprint(onCollectorStatus = () => {}) {
     metadata: {
       project: 'XR Web Fingerprinting Research Platform',
       collectedAt,
-      moduleVersion: 'task-4-webxr',
+      moduleVersion: 'task-5-passive-browser-info',
       modules,
     },
     ...Object.fromEntries(results),
@@ -76,16 +82,25 @@ async function runCollector(name, collector, onCollectorStatus = () => {}) {
 elements.collectButton.addEventListener('click', async () => {
   renderStatus('Collecting fingerprint...', elements);
   latestFingerprint = await collectFingerprint((name, phase, result) => {
-    if (name !== 'webxr') {
+    const labels = {
+      webxr: 'WebXR',
+      permissions: 'Permissions',
+      storage: 'Storage',
+      network: 'Network',
+    };
+
+    if (!labels[name]) {
       return;
     }
 
     if (phase === 'begin') {
-      renderStatus('WebXR collection begins: passively checking browser-exposed XR capabilities...', elements);
+      renderStatus(`${labels[name]} collection begins: passively checking browser-exposed capabilities...`, elements);
     }
 
     if (phase === 'complete') {
-      renderStatus(`WebXR collection complete. WebXR supported: ${result.supported ? 'yes' : 'no'}.`, elements);
+      const warningCount = result.warnings?.length ?? 0;
+      const warningText = warningCount > 0 ? ` Non-fatal warnings: ${warningCount}.` : '';
+      renderStatus(`${labels[name]} collection complete. Supported: ${result.supported ? 'yes' : 'no'}.${warningText}`, elements);
     }
   });
   renderFingerprint(latestFingerprint, elements);
