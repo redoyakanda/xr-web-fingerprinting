@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
-import { buildFingerprint, validateResearchRecord, APPLICATION_VERSION } from '../js/ui/summary.js';
+import { buildFingerprint, buildResearchRecord, validateResearchRecord, APPLICATION_VERSION } from '../js/ui/summary.js';
 import { selectExport, prepareExport } from '../js/export/jsonExport.js';
 import { extractInteractionFeatures } from '../js/experiments/interactionFeatures.js';
 import { ExperimentManager } from '../js/core/experimentManager.js';
@@ -20,6 +20,19 @@ assert.equal(second.screenReaderDetectionModelStatus,'not-trained');
 assert.equal(second.classification,null);
 assert.ok(!('groundTruth' in selectExport(second,'feature-vector')));
 assert.doesNotThrow(()=>JSON.parse(prepareExport(second)));
+
+const extensionOnly={performed:true,supported:true,timing:{startedAt:'2026-09-14T00:00:00.000Z',finishedAt:'2026-09-14T00:00:02.000Z',durationMs:2000,configuredDurationMs:2000},observerDisconnected:true,aggregateFeatures:{mutations:{totalMutationCount:1}},warnings:[],errors:[]};
+const interactionOnly={performed:true,groundTruth:{participantCode:'P001'},timing:{startedAt:'2026-09-14T00:00:00.000Z',finishedAt:'2026-09-14T00:00:20.000Z',durationMs:20000},tasks:[],aggregateFeatures:{timing:{totalExperimentDuration:20000}},rawEventsIncluded:false};
+const extensionRecord=buildResearchRecord({extensionArtifactObservation:extensionOnly});
+assert.equal(extensionRecord.passiveSnapshot.performed,false);
+assert.equal(selectExport(extensionRecord,'extension').aggregateFeatures.mutations.totalMutationCount,1);
+const interactionRecord=buildResearchRecord({interactionExperiment:interactionOnly});
+assert.equal(interactionRecord.passiveSnapshot.performed,false);
+assert.equal(selectExport(interactionRecord,'interaction').timing.totalExperimentDuration,20000);
+const completeRecord=buildResearchRecord({passiveRecord:second,extensionArtifactObservation:extensionOnly,interactionExperiment:interactionOnly});
+assert.equal(completeRecord.passiveSnapshot.performed,true);
+assert.equal(completeRecord.extensionArtifactObservation.performed,true);
+assert.equal(completeRecord.interactionExperiment.performed,true);
 
 for(const durationMs of [20_000,60_000,5*60_000]){
  const aggregate=extractInteractionFeatures({durationMs,tasks:[{taskId:'one',completed:true,durationMs,interactionCount:0}],events:[]});
