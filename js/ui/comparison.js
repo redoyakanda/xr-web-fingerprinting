@@ -18,7 +18,7 @@ export function compareFingerprints(current, imported, options = {}) {
   if(family!=='all'){current=current.featureGroups?.[family]??{};imported=imported.featureGroups?.[family]??{};}
   const rows = [];
   walk('$', normalizeForJson(current), normalizeForJson(imported), rows);
-  const filtered = rows.map((row) => ({ ...row, excluded: !includeVolatile && isVolatilePath(row.path) }));
+  const filtered = rows.map((row) => ({ ...row, status: comparisonStatus(row), excluded: !includeVolatile && isVolatilePath(row.path) }));
   const comparable = filtered.filter((r) => !r.excluded && ['identical', 'changed'].includes(r.result));
   const summary = {
     totalFields: filtered.filter((r) => !r.excluded).length,
@@ -28,11 +28,20 @@ export function compareFingerprints(current, imported, options = {}) {
     importedOnly: filtered.filter((r) => !r.excluded && r.result === 'only in imported').length,
     incomparable: filtered.filter((r) => !r.excluded && r.result === 'incomparable').length,
     errors: filtered.filter((r) => !r.excluded && r.result === 'error').length,
+    unsupported: filtered.filter((r) => !r.excluded && r.status === 'unsupported').length,
+    notPerformed: filtered.filter((r) => !r.excluded && r.status === 'not-performed').length,
     comparableFields: comparable.length,
     similarityPercentage: comparable.length ? Number(((comparable.filter((r) => r.result === 'identical').length / comparable.length) * 100).toFixed(2)) : 0,
     similarityFormula: 'identical comparable fields / total comparable fields; volatile metadata excluded by default; not entropy or uniqueness.',
   };
   return { comparisonTimestampUTC: new Date().toISOString(), comparisonMode:family==='interactionFeatures'?'behavioral features':'fingerprint equality', featureFamily:family, summary, excludedVolatilePaths: VOLATILE_PATH_PATTERNS.map(String), rows: filtered };
+}
+function comparisonStatus(row) {
+  if (row.result === 'only in current') return 'missing-imported';
+  if (row.result === 'only in imported') return 'missing-current';
+  if (/\.supported$/.test(row.path) && (row.currentValue === false || row.importedValue === false)) return 'unsupported';
+  if (/\.performed$/.test(row.path) && (row.currentValue === false || row.importedValue === false)) return 'not-performed';
+  return row.result === 'identical' ? 'same' : row.result;
 }
 
 function walk(path, a, b, rows) {
