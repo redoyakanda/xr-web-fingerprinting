@@ -21,6 +21,12 @@ export function renderFilteredRows(fingerprint, elements, state = {}) {
   elements.filterCount.textContent = `${visible.length} / ${rows.length} fields`;
   elements.structuredView.innerHTML = visible.length ? groupRows(visible) : '<p>No fields match the active filters.</p>';
 }
+export function renderDataRows(value, container, search = '') {
+  if (!value?.performed) { container.innerHTML = '<p class="not-performed"><strong>Not performed</strong></p>'; return; }
+  const query = search.trim().toLowerCase();
+  const rows = flattenFingerprint(value).filter((row) => !query || `${row.category} ${row.path} ${formatValue(row.value)}`.toLowerCase().includes(query));
+  container.innerHTML = rows.length ? groupRows(rows) : '<p>No fields match the active search.</p>';
+}
 function groupRows(rows) { const groups = new Map(); rows.forEach((r) => { if (!groups.has(r.category)) groups.set(r.category, []); groups.get(r.category).push(r); }); return Array.from(groups, ([name, rs]) => `<details id="collector-${name}" open><summary>${displayName(name)} (${rs.length})</summary><dl class="kv-list">${rs.map((r) => `<div><dt>${r.path}</dt><dd><code>${escapeHtml(formatValue(r.value))}</code></dd></div>`).join('')}</dl></details>`).join(''); }
 export function renderComparison(comparison, elements, options = {}) {
   const s = comparison.summary; elements.comparisonSummary.innerHTML = `<div class="summary-cards compact">${cards({ 'Fields compared': s.totalFields, Identical: s.identical, Changed: s.changed, 'Current only': s.currentOnly, 'Imported only': s.importedOnly, Similarity: `${s.similarityPercentage}%` })}</div>`;

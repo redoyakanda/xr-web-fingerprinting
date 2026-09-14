@@ -58,6 +58,31 @@ export function buildFingerprint({ collectorResults, startedAt, endedAt, debugMo
   return normalizeForJson(record, { includeErrorStacks: debugMode });
 }
 
+/** Create an exportable session before any passive collectors have run. */
+export function buildResearchRecord({ passiveRecord = null, extensionArtifactObservation = null, interactionExperiment = null } = {}) {
+  if (passiveRecord) return refreshDerivedRecord({
+    ...passiveRecord,
+    extensionArtifactObservation: extensionArtifactObservation || emptyExtensionObservation(),
+    interactionExperiment: interactionExperiment || emptyInteractionExperiment(),
+  });
+  const now = new Date().toISOString();
+  const metadata = { schemaVersion: SCHEMA_VERSION, applicationVersion: APPLICATION_VERSION, collectionId: createCollectionId(), collectedAtUTC: now, secureContext: Boolean(globalThis.isSecureContext ?? globalThis.window?.isSecureContext), pageURLOrigin: getPageOrigin() };
+  const record = {
+    metadata, ...metadata, collectionDurationMs: null, collectionStatus: 'not-performed', collectorCount: 0,
+    successfulCollectorCount: 0, unsupportedCollectorCount: 0, warningCount: 0, errorCount: 0,
+    totalValuesCollected: 0, ethicsNotice: ETHICS_NOTICE, screenReaderDetectionModelStatus: 'not-trained', classification: null,
+    passiveSnapshot: { performed: false, timing: { startedAt: null, finishedAt: null, durationMs: null }, collectors: {} },
+    extensionArtifactObservation: extensionArtifactObservation || emptyExtensionObservation(),
+    interactionExperiment: interactionExperiment || emptyInteractionExperiment(),
+    collectorManifest: [], categorySummaries: {}, collectors: {}, accessibilitySummary: { screenReaderDetectionModelStatus: 'not-trained', classification: null },
+  };
+  record.featureGroups = buildFeatureVector(record);
+  return normalizeForJson(record);
+}
+
+function emptyExtensionObservation() { return { performed: false, supported: null, timing: { startedAt: null, finishedAt: null, durationMs: null, configuredDurationMs: 2000 }, observerDisconnected: false, aggregateFeatures: {}, warnings: [], errors: [] }; }
+function emptyInteractionExperiment() { return { performed: false, groundTruth: {}, timing: { startedAt: null, finishedAt: null, durationMs: null }, tasks: [], aggregateFeatures: {}, rawEventsIncluded: false }; }
+
 /** Rebuild derived groups after a bounded observation or interaction result changes. */
 export function refreshDerivedRecord(record) {
   return normalizeForJson({ ...record, featureGroups: buildFeatureVector(record), accessibilitySummary: { screenReaderDetectionModelStatus: 'not-trained', classification: null } });
@@ -71,11 +96,13 @@ export function validateResearchRecord(record) {
     if (!record[section] || typeof record[section] !== 'object' || Array.isArray(record[section])) errors.push(`${section} must be an object`);
   }
   if (record.metadata?.schemaVersion !== SCHEMA_VERSION) errors.push(`metadata.schemaVersion must be ${SCHEMA_VERSION}`);
-  for (const path of ['metadata.collectedAtUTC','passiveSnapshot.timing.startedAt','passiveSnapshot.timing.finishedAt']) {
+  const timestampPaths = ['metadata.collectedAtUTC'];
+  if (record.passiveSnapshot?.performed) timestampPaths.push('passiveSnapshot.timing.startedAt','passiveSnapshot.timing.finishedAt');
+  for (const path of timestampPaths) {
     const value = path.split('.').reduce((item, key) => item?.[key], record);
     if (typeof value !== 'string' || Number.isNaN(Date.parse(value)) || !value.endsWith('Z')) errors.push(`${path} must be a UTC ISO timestamp`);
   }
-  if (record.passiveSnapshot?.performed !== true) errors.push('passiveSnapshot.performed must be true');
+  if (typeof record.passiveSnapshot?.performed !== 'boolean') errors.push('passiveSnapshot.performed must be boolean');
   if (record.screenReaderDetectionModelStatus !== 'not-trained' || record.classification !== null) errors.push('classifier status must remain not-trained with null classification');
   return { valid: errors.length === 0, errors };
 }
