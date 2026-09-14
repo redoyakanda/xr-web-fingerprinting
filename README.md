@@ -65,3 +65,9 @@ Keep the app static and dependency-free. Do not add sensitive collectors or perm
 ## Phase B: bounded extension artifacts
 
 The separate **Extension Artifacts** control explicitly starts a two-second observation of page-visible DOM changes and new JavaScript global property names. It never runs at page load or during passive collection. It does not enumerate installed extensions, probe extension URLs or IDs, or inspect extension internals. Its aggregate `extensionArtifactObservation` output and `extensionArtifactFeatures` family remain separate from the passive snapshot. Observed mutations are not evidence of assistive-technology or screen-reader use.
+
+## Phase C: accessibility interaction experiment
+
+The dashboard now includes an optional, controlled **Accessibility Interaction Experiment**. A researcher supplies pseudonymous ground-truth condition labels, the participant confirms the notice, and recording begins only when Start is activated. The identical ten-task accessible environment is used for every comparison condition. Finish or Cancel immediately removes interaction listeners; Reset supports uncontaminated repeated trials.
+
+The exported `interactionExperiment` is separate from passive collection and extension-artifact observation. It contains task summaries and candidate aggregate features, with raw events disabled by default. This is a local measurement system, **not a screen-reader detector**: no disability inference, classification, automatic upload, typed content, values, pointer trajectories, or sensor/pose data is collected. Application version 1.0.0 uses schema 1.3.0.

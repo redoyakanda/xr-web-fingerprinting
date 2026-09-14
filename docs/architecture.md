@@ -33,3 +33,9 @@ Add a module under `js/collectors/`, return the standard envelope, avoid permiss
 ## Phase B bounded observer
 
 The Phase B extension-artifact module is deliberately absent from the passive registry. Only its explicit button creates one `MutationObserver` over the current document, using child-list and attribute observation with `characterData: false`. The app excludes its own progress panel, disconnects after two seconds, and retains aggregate counts and names—not DOM, page text, script bodies, or stylesheet bodies. Starting another run stops the prior observer. Its top-level output and `extensionArtifactFeatures` family are separate from passive features and the reserved interaction experiment. This is neither extension enumeration nor a screen-reader detector.
+
+## Phase C experiment components
+
+`ExperimentManager` owns the `IDLE → READY → RECORDING → FINISHED` state machine (with cancellation), immutable researcher ground truth, fixed task ordering/timestamps, and final output. It prevents simultaneous trials. `experimentTasks` defines and renders the same semantic environment for every condition. `InteractionRecorder` independently follows `IDLE → READY → RECORDING → FINISHED`; only RECORDING handlers accept events. Finish, Cancel, and Reset synchronously unregister focus, keyboard, pointer, click, and throttled-scroll handlers and cancel pending timers. Reset also clears buffers.
+
+After listener cleanup, `interactionFeatures` reduces safe event metadata into aggregate feature families. The analysis feature vector keeps these `interactionFeatures` separate from passive, extension-artifact, device/browser, traditional, XR, and accessibility families. The accessibility summary explicitly reports model status `not-trained` and a null classification.
