@@ -3,10 +3,12 @@ import { normalizeForJson, stableStringify } from '../utils/normalization.js';
 export function stringifyFingerprint(fingerprint) { return JSON.stringify(normalizeForJson(fingerprint), null, 2); }
 export function sanitizeFilename(name) { return String(name).replace(/[^A-Za-z0-9._-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 160) || 'fingerprint.json'; }
 export function fingerprintFilename(fingerprint) {
-  const timestamp = (fingerprint.collectedAtUTC || new Date().toISOString()).replace(/[:.]/g, '-');
-  const id = String(fingerprint.collectionId || 'no-id').replace(/[^A-Za-z0-9]/g, '').slice(0, 8);
-  return sanitizeFilename(`xr-browser-fingerprint_${timestamp}_${id}.json`);
+  const timestamp = (fingerprint.metadata?.collectedAtUTC || fingerprint.collectedAtUTC || new Date().toISOString()).replace(/[:.]/g, '-');
+  const id = String(fingerprint.metadata?.collectionId || fingerprint.collectionId || 'no-id').replace(/[^A-Za-z0-9]/g, '').slice(0, 8);
+  return sanitizeFilename(`xr-web-study_${timestamp}_${id}.json`);
 }
+export const EXPORT_TYPES=Object.freeze(['complete','passive','traditional','xr','accessibility-passive','extension','interaction','feature-vector','comparison']);
+export function selectExport(record,type='complete') { const g=record.featureGroups||{}; switch(type){case'passive':return record.passiveSnapshot;case'traditional':return g.traditionalFingerprintFeatures||{};case'xr':return g.xrFeatures||{};case'accessibility-passive':return {accessibilityPreferenceFeatures:g.accessibilityPreferenceFeatures||{},accessibilityEnvironmentFeatures:g.accessibilityEnvironmentFeatures||{},accessibilityAPISurfaceFeatures:g.accessibilityAPISurfaceFeatures||{}};case'extension':return g.extensionArtifactFeatures||{};case'interaction':return g.interactionFeatures||{};case'feature-vector':return {groundTruth:record.interactionExperiment?.groundTruth||{},featureGroups:g};default:return record;} }
 export function buildSummaryExport(fingerprint) {
   const { collectors = {}, ...metadata } = fingerprint;
   return normalizeForJson({ ...metadata, collectors: Object.fromEntries(Object.entries(collectors).map(([name, c]) => [name, { category: c.category, supported: c.supported, warningCount: c.warnings?.length || 0, errorCount: c.errors?.length || 0, durationMs: c.durationMs ?? null }])) });
