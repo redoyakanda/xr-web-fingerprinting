@@ -1,7 +1,7 @@
 import { countLeafValues, normalizeForJson } from '../utils/normalization.js';
 
-export const SCHEMA_VERSION = '1.1.0';
-export const APPLICATION_VERSION = '0.8.0';
+export const SCHEMA_VERSION = '1.2.0';
+export const APPLICATION_VERSION = '0.9.0';
 export const ETHICS_NOTICE = 'Research prototype: browser-exposed fingerprinting features are collected and compared locally; no uniqueness claims are made.';
 
 export function createCollectionId() {
@@ -18,7 +18,7 @@ export function getPageOrigin() {
   try { return globalThis.location?.origin || 'unknown-origin'; } catch { return 'unknown-origin'; }
 }
 
-export function buildFingerprint({ collectorResults, startedAt, endedAt, debugMode = false }) {
+export function buildFingerprint({ collectorResults, startedAt, endedAt, debugMode = false, extensionArtifactObservation = null }) {
   const collectors = Object.fromEntries(Object.entries(collectorResults).map(([name, result]) => [name, normalizeCollector(name, result, debugMode)]));
   const collectorValues = Object.values(collectors);
   const warningCount = collectorValues.reduce((sum, c) => sum + c.warnings.length, 0);
@@ -43,6 +43,9 @@ export function buildFingerprint({ collectorResults, startedAt, endedAt, debugMo
     ethicsNotice: ETHICS_NOTICE,
     screenReaderDetectionModelStatus: 'not-trained',
     classification: null,
+    passiveSnapshot: { performed: true },
+    extensionArtifactObservation: extensionArtifactObservation || { performed: false, observationStartedAt: null, observationFinishedAt: null, observationDurationMs: null, configuredDurationMs: 2000, observerDisconnected: false, aggregateFeatures: {} },
+    interactionExperiment: { performed: false },
     collectorManifest: Object.keys(collectors).map((name) => ({ name, version: APPLICATION_VERSION })),
     categorySummaries: buildCategorySummaries(collectors),
     collectors,
