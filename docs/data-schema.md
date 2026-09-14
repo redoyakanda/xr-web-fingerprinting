@@ -16,8 +16,12 @@ Warnings are non-fatal strings. Errors are structured with collector name, messa
 
 ## Versioning policy
 
-Schema version `1.0.0` is used for this research-grade static schema. Increment the schema when field meaning or required structure changes.
+Schema version `1.2.0` is used for this research-grade static schema. Increment the schema when field meaning or required structure changes.
 
 ## Comparison report schema
 
 Reports include comparison timestamp, sanitized source filenames, summary counts, excluded volatile path patterns, and field-level differences. Raw local file paths are never included.
+
+## Phase B sections
+
+`passiveSnapshot`, `extensionArtifactObservation`, and the reserved `interactionExperiment` are separate top-level sections. The extension section records whether the explicit observation was performed, timestamps, duration, cleanup state, configured duration, and compact `aggregateFeatures`. It is never merged into passive collector values. `js/ui/featureVector.js` exposes those aggregates as `extensionArtifactFeatures`.

@@ -1,1 +1,1 @@
-{"type":"module","scripts":{"test":"node tests/schema.test.js && node tests/normalization.test.js && node tests/comparison.test.js && node tests/accessibility.test.mjs"},"devDependencies":{}}
+{"type":"module","scripts":{"test":"node tests/schema.test.js && node tests/normalization.test.js && node tests/comparison.test.js && node tests/accessibility.test.mjs && node tests/extensionArtifacts.test.mjs"},"devDependencies":{}}

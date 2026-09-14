@@ -61,3 +61,7 @@ Unsupported APIs are reported as unsupported or partial results. WebXR/WebGPU of
 ## Contributing
 
 Keep the app static and dependency-free. Do not add sensitive collectors or permission prompts without documented ethics review. Update docs and tests whenever schemas or UI behavior change.
+
+## Phase B: bounded extension artifacts
+
+The separate **Extension Artifacts** control explicitly starts a two-second observation of page-visible DOM changes and new JavaScript global property names. It never runs at page load or during passive collection. It does not enumerate installed extensions, probe extension URLs or IDs, or inspect extension internals. Its aggregate `extensionArtifactObservation` output and `extensionArtifactFeatures` family remain separate from the passive snapshot. Observed mutations are not evidence of assistive-technology or screen-reader use.

@@ -29,3 +29,7 @@ The application is entirely local: no collector uploads data, calls a backend, o
 ## Adding collectors
 
 Add a module under `js/collectors/`, return the standard envelope, avoid permission prompts and sensitive APIs, add it to the registry in `js/core/app.js`, update docs and tests, and do not introduce network requests or third-party dependencies.
+
+## Phase B bounded observer
+
+The Phase B extension-artifact module is deliberately absent from the passive registry. Only its explicit button creates one `MutationObserver` over the current document, using child-list and attribute observation with `characterData: false`. The app excludes its own progress panel, disconnects after two seconds, and retains aggregate counts and names—not DOM, page text, script bodies, or stylesheet bodies. Starting another run stops the prior observer. Its top-level output and `extensionArtifactFeatures` family are separate from passive features and the reserved interaction experiment. This is neither extension enumeration nor a screen-reader detector.
