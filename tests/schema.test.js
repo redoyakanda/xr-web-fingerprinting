@@ -4,6 +4,8 @@ import { sanitizeFilename, prepareExport, buildSummaryExport } from '../js/expor
 const collectorResults = { webxr:{category:'webxr',supported:false,values:{navigatorXRAvailable:false},warnings:['no xr'],errors:[]}, webgpu:{category:'webgpu',supported:true,values:{webgpuSupported:true},warnings:[],errors:[]}, gamepad:{category:'gamepad',supported:true,values:{exposedGamepadCount:0},warnings:[],errors:[]} };
 const fp = buildFingerprint({ collectorResults, startedAt:new Date('2026-01-01T00:00:00Z'), endedAt:new Date('2026-01-01T00:00:01Z') });
 for (const key of ['schemaVersion','applicationVersion','collectionId','collectedAtUTC','collectionDurationMs','secureContext','pageURLOrigin','collectorCount','successfulCollectorCount','unsupportedCollectorCount','warningCount','errorCount','ethicsNotice','collectors']) assert.ok(key in fp);
+assert.equal(fp.screenReaderDetectionModelStatus, 'not-trained');
+assert.equal(fp.classification, null);
 assert.equal(fp.collectorCount, 3);
 assert.doesNotThrow(() => JSON.parse(prepareExport(fp)));
 assert.ok(buildSummaryExport(fp).collectors.webxr.warningCount === 1);
