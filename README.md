@@ -70,4 +70,13 @@ The separate **Extension Artifacts** control explicitly starts a two-second obse
 
 The dashboard now includes an optional, controlled **Accessibility Interaction Experiment**. A researcher supplies pseudonymous ground-truth condition labels, the participant confirms the notice, and recording begins only when Start is activated. The identical ten-task accessible environment is used for every comparison condition. Finish or Cancel immediately removes interaction listeners; Reset supports uncontaminated repeated trials.
 
-The exported `interactionExperiment` is separate from passive collection and extension-artifact observation. It contains task summaries and candidate aggregate features, with raw events disabled by default. This is a local measurement system, **not a screen-reader detector**: no disability inference, classification, automatic upload, typed content, values, pointer trajectories, or sensor/pose data is collected. Application version 1.0.0 uses schema 1.3.0.
+The exported `interactionExperiment` is separate from passive collection and extension-artifact observation. It contains task summaries and candidate aggregate features, with raw events disabled by default. This is a local measurement system, **not a screen-reader detector**: no disability inference, classification, automatic upload, typed content, values, pointer trajectories, or sensor/pose data is collected. Application version 1.1.0 uses schema 2.0.0.
+
+
+## Phase D research-ready integration
+
+The final dashboard supports **Study A**, descriptive desktop/mobile/XR browser and device fingerprint measurement, and **Study B**, measurement of differences associated with screen-reader-assisted browsing. Study B separates a one-shot passive snapshot, an explicitly activated 2000 ms page-visible extension-artifact observation, and a confirmed task-bounded interaction experiment with no arbitrary cutoff. These modes do not activate one another.
+
+The unified record exposes independent device/browser, traditional, XR, accessibility preference, accessibility environment, accessibility API, extension-artifact, and interaction feature families. Researchers can download a complete record or individual families for later offline ablation, and compare two local records by family. Behavioral timing remains available while volatile record identity/timestamps are excluded from generic equality by default. No comparison proves fingerprintability.
+
+All assets are local. Runtime collection makes no network request and no record is automatically submitted. Known limitations include browser-dependent WebXR/WebGPU/API exposure, secure-context restrictions, extension/page mutation ambiguity, assistive-technology/browser variation, and the need for physical-device manual validation. This is a pilot research prototype—not a detector, classifier, clinical tool, or finding that screen-reader-assisted browsing is detectable.

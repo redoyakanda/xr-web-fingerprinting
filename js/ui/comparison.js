@@ -2,18 +2,20 @@ import { stableStringify, normalizeForJson } from '../utils/normalization.js';
 
 export const VOLATILE_PATH_PATTERNS = [
   /^\$\.collectedAtUTC$/, /^\$\.collectionDurationMs$/, /^\$\.collectionId$/, /^\$\.generatedFilename$/,
-  /^\$\.metadata\.collectedAt$/, /^\$\.metadata\.sessionId$/, /durationMs$/, /elapsed/i, /temp(orary)?Name/i, /stack$/i,
+  /^\$\.metadata\.(collectedAtUTC|collectionId|sessionId)$/, /^\$\.passiveSnapshot\.timing\./, /^\$\.extensionArtifactObservation\.timing\.(startedAt|finishedAt)/, /^\$\.interactionExperiment\.timing\.(startedAt|finishedAt)/, /temp(orary)?Name/i, /stack$/i,
   /^\$\.collectors\.[^.]+\.errors\.\d+\.stack$/,
 ];
 
 export function validateFingerprintJson(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Imported JSON must be an object.');
-  if (!value.collectors && !Object.values(value).some((entry) => entry && typeof entry === 'object' && 'supported' in entry)) throw new Error('Imported JSON does not look like a fingerprint result.');
+  if (!value.collectors && !value.passiveSnapshot && !value.featureGroups && !Object.values(value).some((entry) => entry && typeof entry === 'object' && 'supported' in entry)) throw new Error('Imported JSON does not look like a research record.');
   return true;
 }
 
 export function compareFingerprints(current, imported, options = {}) {
   const includeVolatile = Boolean(options.includeVolatile);
+  const family=options.family||'all';
+  if(family!=='all'){current=current.featureGroups?.[family]??{};imported=imported.featureGroups?.[family]??{};}
   const rows = [];
   walk('$', normalizeForJson(current), normalizeForJson(imported), rows);
   const filtered = rows.map((row) => ({ ...row, excluded: !includeVolatile && isVolatilePath(row.path) }));
@@ -30,7 +32,7 @@ export function compareFingerprints(current, imported, options = {}) {
     similarityPercentage: comparable.length ? Number(((comparable.filter((r) => r.result === 'identical').length / comparable.length) * 100).toFixed(2)) : 0,
     similarityFormula: 'identical comparable fields / total comparable fields; volatile metadata excluded by default; not entropy or uniqueness.',
   };
-  return { comparisonTimestampUTC: new Date().toISOString(), summary, excludedVolatilePaths: VOLATILE_PATH_PATTERNS.map(String), rows: filtered };
+  return { comparisonTimestampUTC: new Date().toISOString(), comparisonMode:family==='interactionFeatures'?'behavioral features':'fingerprint equality', featureFamily:family, summary, excludedVolatilePaths: VOLATILE_PATH_PATTERNS.map(String), rows: filtered };
 }
 
 function walk(path, a, b, rows) {
