@@ -4,7 +4,9 @@ A static, vanilla JavaScript research prototype for observing browser-exposed fi
 
 ## Research scope
 
-The platform records a passive local collection result across existing collectors: navigator, screen, window, canvas, WebGL, audio, WebGPU, WebXR, permissions, storage, network, fonts, CSS media queries, feature detection, and gamepad. It does not add motion, pose, camera, microphone, geolocation, IP discovery, WebRTC probing, local-font enumeration, or behavioral collection.
+The platform records a passive local collection result across the existing navigator, screen, window, canvas, WebGL, audio, WebGPU, WebXR, permissions, storage, network, fonts, CSS media-query, feature-detection, and gamepad collectors. It also records three separate accessibility-related groups: **Accessibility Preferences**, **Accessibility Environment**, and **Accessibility API Surface**.
+
+The accessibility collectors take a one-time snapshot only when **Collect Passive Fingerprint** is selected. They inspect browser-exposed media preferences, focus/environment state, and API availability. They do not continuously monitor interactions, access an operating-system accessibility tree, read screen-reader output, collect typed text, enumerate extensions, or activate sensitive APIs. Accessibility-related browser state can vary during screen-reader-assisted browsing or assistive-technology-assisted interaction, but these signals are **not proof of screen-reader use and must not be used to infer disability status**. Mainstream browsers expose no general `navigator.screenReader` API, and this project has no heuristic detector or classifier; exported results explicitly report `screenReaderDetectionModelStatus: "not-trained"` and `classification: null`.
 
 ## Project structure
 
@@ -50,7 +52,7 @@ Use **Download JSON** for a full local result or **Download Summary** for metada
 
 ## Privacy and ethics
 
-The project is a research prototype. It avoids remote upload, third-party scripts, analytics, hidden identifiers, automatic persistent storage, camera, microphone, geolocation, motion sensors, and WebRTC IP discovery. Obtain appropriate consent and IRB/ethics review before collecting data from human participants.
+The project is a research prototype. It avoids remote upload, third-party scripts, analytics, hidden identifiers, automatic persistent storage, camera, microphone, geolocation, motion-sensor values, XR pose, screen-reader speech, typed text, extension enumeration, and WebRTC IP discovery. Obtain appropriate consent and IRB/ethics review before collecting data from human participants.
 
 ## Current limitations and compatibility
 

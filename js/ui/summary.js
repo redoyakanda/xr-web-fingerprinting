@@ -1,7 +1,7 @@
 import { countLeafValues, normalizeForJson } from '../utils/normalization.js';
 
-export const SCHEMA_VERSION = '1.0.0';
-export const APPLICATION_VERSION = '0.7.0';
+export const SCHEMA_VERSION = '1.1.0';
+export const APPLICATION_VERSION = '0.8.0';
 export const ETHICS_NOTICE = 'Research prototype: browser-exposed fingerprinting features are collected and compared locally; no uniqueness claims are made.';
 
 export function createCollectionId() {
@@ -41,6 +41,8 @@ export function buildFingerprint({ collectorResults, startedAt, endedAt, debugMo
     errorCount,
     totalValuesCollected: countLeafValues(collectors),
     ethicsNotice: ETHICS_NOTICE,
+    screenReaderDetectionModelStatus: 'not-trained',
+    classification: null,
     collectorManifest: Object.keys(collectors).map((name) => ({ name, version: APPLICATION_VERSION })),
     categorySummaries: buildCategorySummaries(collectors),
     collectors,

@@ -10,7 +10,7 @@ export function renderFingerprint(fingerprint, elements, state = {}) {
     'Total values collected': fingerprint.totalValuesCollected, 'WebXR available': yes(fingerprint.collectors.webxr?.supported), 'WebGPU available': yes(fingerprint.collectors.webgpu?.supported),
     'Gamepads exposed': fingerprint.collectors.gamepad?.values?.exposedGamepadCount ?? 0, Warnings: fingerprint.warningCount, Errors: fingerprint.errorCount,
   });
-  elements.categoryNav.innerHTML = Object.entries(fingerprint.collectors).map(([name,c]) => `<a href="#collector-${name}" class="nav-item"><span>${name}</span><span>${c.supported?'supported':'unsupported'} · ⚠ ${c.warnings.length} · ✖ ${c.errors.length}</span></a>`).join('');
+  elements.categoryNav.innerHTML = Object.entries(fingerprint.collectors).map(([name,c]) => `<a href="#collector-${name}" class="nav-item"><span>${displayName(name)}</span><span>${c.supported?'supported':'unsupported'} · ⚠ ${c.warnings.length} · ✖ ${c.errors.length}</span></a>`).join('');
   renderFilteredRows(fingerprint, elements, state);
   elements.statusMessage.textContent = `Collection ${fingerprint.collectionStatus}. Duration: ${fingerprint.collectionDurationMs} ms.`;
   [elements.copyButton, elements.copySummaryButton, elements.downloadButton, elements.downloadSummaryButton].forEach((b) => { b.disabled = false; });
@@ -21,7 +21,7 @@ export function renderFilteredRows(fingerprint, elements, state = {}) {
   elements.filterCount.textContent = `${visible.length} / ${rows.length} fields`;
   elements.structuredView.innerHTML = visible.length ? groupRows(visible) : '<p>No fields match the active filters.</p>';
 }
-function groupRows(rows) { const groups = new Map(); rows.forEach((r) => { if (!groups.has(r.category)) groups.set(r.category, []); groups.get(r.category).push(r); }); return Array.from(groups, ([name, rs]) => `<details id="collector-${name}" open><summary>${name} (${rs.length})</summary><dl class="kv-list">${rs.map((r) => `<div><dt>${r.path}</dt><dd><code>${escapeHtml(formatValue(r.value))}</code></dd></div>`).join('')}</dl></details>`).join(''); }
+function groupRows(rows) { const groups = new Map(); rows.forEach((r) => { if (!groups.has(r.category)) groups.set(r.category, []); groups.get(r.category).push(r); }); return Array.from(groups, ([name, rs]) => `<details id="collector-${name}" open><summary>${displayName(name)} (${rs.length})</summary><dl class="kv-list">${rs.map((r) => `<div><dt>${r.path}</dt><dd><code>${escapeHtml(formatValue(r.value))}</code></dd></div>`).join('')}</dl></details>`).join(''); }
 export function renderComparison(comparison, elements, options = {}) {
   const s = comparison.summary; elements.comparisonSummary.innerHTML = `<div class="summary-cards compact">${cards({ 'Fields compared': s.totalFields, Identical: s.identical, Changed: s.changed, 'Current only': s.currentOnly, 'Imported only': s.importedOnly, Similarity: `${s.similarityPercentage}%` })}</div>`;
   const rows = comparison.rows.filter((r) => !r.excluded && (options.showIdentical || r.result !== 'identical') && (!options.onlyDifferences || r.result !== 'identical'));
@@ -32,4 +32,5 @@ export function renderStatus(message, elements) { elements.statusMessage.textCon
 export function updateProgress(elements, { current = 'Idle', completed = 0, total = 0, warnings = 0, errors = 0 }) { elements.progress.max = total; elements.progress.value = completed; elements.currentCollector.textContent = current; elements.completedCount.textContent = `${completed} / ${total}`; elements.warningCount.textContent = warnings; elements.errorCount.textContent = errors; }
 function cards(obj) { return Object.entries(obj).map(([k,v]) => `<article class="summary-card"><span>${k}</span><strong>${v}</strong></article>`).join(''); }
 function yes(v) { return v ? 'Yes' : 'No'; }
+function displayName(name) { return ({ accessibilityPreferences:'Accessibility Preferences', accessibilityEnvironment:'Accessibility Environment', accessibilityAPISurface:'Accessibility API Surface' })[name] || name; }
 function escapeHtml(s) { return String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
