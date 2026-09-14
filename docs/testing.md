@@ -1,47 +1,60 @@
-# Testing
+# Testing and pilot checklist
 
-## Local test procedure
+## Automated validation
 
-Serve the app statically, collect a fingerprint, verify summary cards, structured/raw views, filters, copy actions, downloads, JSON import, and comparison reports. Run development tests with Node for schema, normalization, comparison, and export helpers.
+Run `npm test` before a pilot. The suite covers schema/export serialization, unsupported APIs, repeated independent passive snapshots, bounded extension observation and observer disconnection, interaction lifecycle and cleanup, task invariance, ground-truth isolation, privacy-safe key categorization, aggregate edge cases, comparison semantics, and the no-classifier contract.
 
-## Browser targets
+## Checklist used for every manual configuration
 
-Test desktop Chrome, Edge, Firefox, and Safari where available. Test XR browsers such as Meta Quest Browser, Apple Vision Pro Safari, and Pico Browser over HTTPS or localhost.
+For **each** configuration below:
 
-## Unsupported-browser behavior
+- [ ] Start from **Reset** without reloading the page; confirm task state, elapsed time, and prior feature buffers are clear.
+- [ ] Complete the listed collection/experiment actions using the stated input method.
+- [ ] Export the Complete Research Record and each relevant focused export; parse each as JSON locally.
+- [ ] Inspect warnings and unsupported states; confirm unsupported is distinct from not performed and does not stop the application.
+- [ ] Finish/cancel and verify elapsed displays stop, no later input changes event/aggregate counts, and extension observation reports `observerDisconnected: true`.
+- [ ] Confirm exports contain no typed characters, form values, clipboard data, pointer coordinates/trajectories, passwords, usernames, or email addresses.
+- [ ] Confirm there are no console-breaking errors and no research-data requests in the browser Network panel.
+- [ ] Check headings, landmarks, labels, focus visibility/order, keyboard operation, live status announcements, dialog focus/closing, contrast, zoom/reflow, and reduced-motion behavior.
 
-Disable or use browsers lacking WebXR, WebGPU, Permissions API, Network Information API, and Gamepad API. The app should still produce a valid partial result with unsupported collectors and warnings.
+## Browser and assistive-technology matrix
 
-## Secure-context requirement
+### Desktop Chrome
+- [ ] Passive snapshot.
+- [ ] Two-second extension artifact observation.
+- [ ] Pointer experiment.
+- [ ] Keyboard-only experiment.
+- [ ] Repeat three trials without reload: P001 / SR OFF, Reset; P001 / SR ON, Reset; P001 / keyboard-only.
 
-WebXR, WebGPU, clipboard, and some storage APIs may require HTTPS. GitHub Pages satisfies this requirement for deployment.
+### Windows + NVDA
+- [ ] Passive snapshot.
+- [ ] Screen-reader interaction experiment and all common checks.
 
-## Expected limitations
+### Windows + Narrator
+- [ ] Screen-reader interaction experiment and all common checks.
 
-Browser privacy settings, private browsing, feature flags, GPU process state, and hardware availability can change values. No uniqueness or entropy claims are made.
+### Windows + JAWS (if available)
+- [ ] Screen-reader interaction experiment and all common checks.
 
-## Phase D automated validation
+### macOS + VoiceOver
+- [ ] Screen-reader interaction experiment and all common checks.
 
-`npm test` covers one-shot passive record construction and serialization, unsupported collector envelopes, explicit/bounded extension observation and disconnection, experiment activation/state transitions, recording boundaries, cleanup/reset and repeated-trial isolation, content-safe interaction events, local export selection, volatile comparison handling, and feature-family comparison. Static privacy checks should also search for prohibited capture and transmission primitives; apparent matches in documentation and tests must be reviewed rather than treated as runtime collection.
+### Android + TalkBack
+- [ ] Screen-reader interaction experiment and all common checks.
 
-## Pilot manual checklist
+### iPhone + VoiceOver
+- [ ] Screen-reader interaction experiment and all common checks.
 
-For every row, verify the downloaded JSON parses, researcher-entered ground truth is correct, raw typed text is absent, `rawEventsIncluded` is false, no recorder/observer remains active, and no console-breaking error occurs.
+### Meta Quest Browser
+- [ ] Passive fingerprint.
+- [ ] Verify the WebXR collector reports capability/permission surface only and does not request a session or pose.
+- [ ] Verify unsupported accessibility modules return warnings and the rest of collection continues.
 
-- [ ] Desktop Chrome — collect passive fingerprint.
-- [ ] Desktop Chrome — run the bounded extension observation and confirm **Observation Stopped**.
-- [ ] Desktop Chrome — run the identical interaction experiment with a mouse.
-- [ ] Desktop Chrome — run the identical interaction experiment keyboard-only.
-- [ ] Desktop + NVDA — run the identical interaction experiment.
-- [ ] Desktop + JAWS — run the identical experiment where available.
-- [ ] Windows + Narrator — run the identical experiment.
-- [ ] macOS + VoiceOver — run the identical experiment.
-- [ ] Android + TalkBack — run the identical experiment.
-- [ ] iPhone + VoiceOver — run the identical experiment.
-- [ ] Meta Quest Browser — collect passive fingerprint.
-- [ ] XR browser — verify unsupported accessibility components fail gracefully.
-- [ ] Without refresh, reset P001 / Trial 1 / SR OFF, then run P001 / Trial 2 / SR ON; confirm isolation.
-- [ ] Load two saved records and exercise every comparison family, including behavioral timing.
-- [ ] Exercise every local export category and confirm no network request contains a record.
+## Comparison and export scenarios
 
-Physical assistive-technology/browser combinations remain a manual pilot prerequisite; automated DOM tests cannot establish real NVDA, JAWS, Narrator, VoiceOver, TalkBack, or XR-browser interoperability.
+- [ ] Compare identical records, SR ON versus SR OFF, keyboard-only versus SR, mobile versus desktop, and XR versus desktop.
+- [ ] Confirm same, changed, missing, unsupported, and not-performed statuses are distinguishable.
+- [ ] Confirm volatile timestamps/IDs are excluded from default fingerprint equality, while behavioral timing remains in interaction-feature mode.
+- [ ] Confirm the UI describes similarity only as field equality—not uniqueness or entropy.
+- [ ] Exercise Complete Research Record, Passive Snapshot Only, Traditional Fingerprinting Features, XR Features, Accessibility Passive Features, Extension Artifact Features, Interaction Aggregate Features, Feature Vector, and Comparison Report exports.
+- [ ] Confirm filenames are sanitized, identify participants only by code, and all files are generated locally.

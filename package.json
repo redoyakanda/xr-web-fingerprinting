@@ -1,7 +1,7 @@
 {
   "type": "module",
   "scripts": {
-    "test": "node tests/schema.test.js && node tests/normalization.test.js && node tests/comparison.test.js && node tests/accessibility.test.mjs && node tests/extensionArtifacts.test.mjs && node tests/interactionExperiment.test.mjs && node tests/task5.test.mjs && node tests/task6.test.mjs && node tests/webxr.test.mjs && node tests/phaseD.test.mjs"
+    "test": "node tests/schema.test.js && node tests/normalization.test.js && node tests/comparison.test.js && node tests/accessibility.test.mjs && node tests/extensionArtifacts.test.mjs && node tests/interactionExperiment.test.mjs && node tests/task5.test.mjs && node tests/task6.test.mjs && node tests/webxr.test.mjs && node tests/phaseD.test.mjs && node tests/phaseE.test.mjs"
   },
   "devDependencies": {}
 }

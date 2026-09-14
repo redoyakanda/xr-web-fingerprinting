@@ -4,7 +4,7 @@ import { EXPORT_TYPES, selectExport, fingerprintFilename, prepareExport } from '
 import { compareFingerprints } from '../js/ui/comparison.js';
 const collectorResults={navigator:{supported:true,values:{userAgent:'test'},warnings:[],errors:[]},canvas:{supported:true,values:{hash:'x'},warnings:[],errors:[]},webxr:{supported:false,values:{available:false},warnings:['unsupported'],errors:[]},accessibilityPreferences:{supported:true,values:{reducedMotion:false},warnings:[],errors:[]},accessibilityEnvironment:{supported:true,values:{focus:'body'},warnings:[],errors:[]},accessibilityAPISurface:{supported:true,values:{ariaReflection:true},warnings:[],errors:[]}};
 const record=buildFingerprint({collectorResults,startedAt:new Date('2026-01-01T00:00:00Z'),endedAt:new Date('2026-01-01T00:00:02Z')});
-assert.equal(SCHEMA_VERSION,'2.0.0'); assert.equal(APPLICATION_VERSION,'1.1.0');
+assert.equal(SCHEMA_VERSION,'2.0.0'); assert.equal(APPLICATION_VERSION,'1.2.0');
 assert.equal(record.passiveSnapshot.performed,true); assert.equal(record.extensionArtifactObservation.performed,false); assert.equal(record.interactionExperiment.rawEventsIncluded,false);
 assert.equal(record.accessibilitySummary.screenReaderDetectionModelStatus,'not-trained'); assert.equal(record.accessibilitySummary.classification,null);
 assert.doesNotThrow(()=>JSON.parse(JSON.stringify(record)));

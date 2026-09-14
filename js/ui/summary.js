@@ -2,7 +2,7 @@ import { countLeafValues, normalizeForJson } from '../utils/normalization.js';
 import { buildFeatureVector } from '../analysis/featureVector.js';
 
 export const SCHEMA_VERSION = '2.0.0';
-export const APPLICATION_VERSION = '1.1.0';
+export const APPLICATION_VERSION = '1.2.0';
 export const ETHICS_NOTICE = 'Research prototype: browser-exposed fingerprinting features are collected and compared locally; no uniqueness claims are made.';
 
 export function createCollectionId() {
@@ -44,7 +44,9 @@ export function buildFingerprint({ collectorResults, startedAt, endedAt, debugMo
     ethicsNotice: ETHICS_NOTICE,
     screenReaderDetectionModelStatus: 'not-trained',
     classification: null,
-    passiveSnapshot: { performed: true, timing: { startedAt: startedAt.toISOString(), finishedAt: endedAt.toISOString(), durationMs: endedAt-startedAt }, collectors },
+    // Detach the compatibility alias so JSON normalization does not mistake the
+    // intentionally duplicated tree for a circular reference.
+    passiveSnapshot: { performed: true, timing: { startedAt: startedAt.toISOString(), finishedAt: endedAt.toISOString(), durationMs: endedAt-startedAt }, collectors: JSON.parse(JSON.stringify(collectors)) },
     extensionArtifactObservation: extensionArtifactObservation || { performed: false, supported: null, timing: { startedAt: null, finishedAt: null, durationMs: null, configuredDurationMs: 2000 }, observerDisconnected: false, aggregateFeatures: {} },
     interactionExperiment: interactionExperiment || { performed: false, groundTruth: {}, timing: { startedAt: null, finishedAt: null, durationMs: null }, tasks: [], aggregateFeatures: {}, rawEventsIncluded: false },
     collectorManifest: Object.keys(collectors).map((name) => ({ name, version: APPLICATION_VERSION })),
@@ -59,6 +61,23 @@ export function buildFingerprint({ collectorResults, startedAt, endedAt, debugMo
 /** Rebuild derived groups after a bounded observation or interaction result changes. */
 export function refreshDerivedRecord(record) {
   return normalizeForJson({ ...record, featureGroups: buildFeatureVector(record), accessibilitySummary: { screenReaderDetectionModelStatus: 'not-trained', classification: null } });
+}
+
+/** Validate the stable, top-level research-record contract before local export/import. */
+export function validateResearchRecord(record) {
+  const errors = [];
+  if (!record || typeof record !== 'object' || Array.isArray(record)) return { valid: false, errors: ['record must be an object'] };
+  for (const section of ['metadata','passiveSnapshot','extensionArtifactObservation','interactionExperiment','featureGroups','accessibilitySummary']) {
+    if (!record[section] || typeof record[section] !== 'object' || Array.isArray(record[section])) errors.push(`${section} must be an object`);
+  }
+  if (record.metadata?.schemaVersion !== SCHEMA_VERSION) errors.push(`metadata.schemaVersion must be ${SCHEMA_VERSION}`);
+  for (const path of ['metadata.collectedAtUTC','passiveSnapshot.timing.startedAt','passiveSnapshot.timing.finishedAt']) {
+    const value = path.split('.').reduce((item, key) => item?.[key], record);
+    if (typeof value !== 'string' || Number.isNaN(Date.parse(value)) || !value.endsWith('Z')) errors.push(`${path} must be a UTC ISO timestamp`);
+  }
+  if (record.passiveSnapshot?.performed !== true) errors.push('passiveSnapshot.performed must be true');
+  if (record.screenReaderDetectionModelStatus !== 'not-trained' || record.classification !== null) errors.push('classifier status must remain not-trained with null classification');
+  return { valid: errors.length === 0, errors };
 }
 
 export function normalizeCollector(name, result, debugMode = false) {
