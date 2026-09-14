@@ -1,5 +1,5 @@
 import { stringifyFingerprint } from '../export/jsonExport.js';
-import { flattenFingerprint, filterRows } from './filters.js';
+import { flattenFingerprint, flattenResult, filterRows, isResultFilterActive, searchResultRows } from './filters.js';
 import { formatValue } from './comparison.js';
 
 export function renderFingerprint(fingerprint, elements, state = {}) {
@@ -18,14 +18,31 @@ export function renderFingerprint(fingerprint, elements, state = {}) {
 
 export function renderFilteredRows(fingerprint, elements, state = {}) {
   const rows = flattenFingerprint(fingerprint); const visible = filterRows(rows, state);
-  elements.filterCount.textContent = `${visible.length} / ${rows.length} fields`;
-  elements.structuredView.innerHTML = visible.length ? groupRows(visible) : '<p>No fields match the active filters.</p>';
+  const active = isResultFilterActive(state);
+  elements.filterCount.textContent = filterStatus(visible.length, rows.length, state);
+  elements.structuredView.innerHTML = visible.length ? groupRows(visible) : emptyRowsMessage(active, Boolean(state.debug));
 }
-export function renderDataRows(value, container, search = '') {
-  if (!value?.performed) { container.innerHTML = '<p class="not-performed"><strong>Not performed</strong></p>'; return; }
-  const query = search.trim().toLowerCase();
-  const rows = flattenFingerprint(value).filter((row) => !query || `${row.category} ${row.path} ${formatValue(row.value)}`.toLowerCase().includes(query));
-  container.innerHTML = rows.length ? groupRows(rows) : '<p>No fields match the active search.</p>';
+export function renderDataRows(value, container, options = '') {
+  const settings = typeof options === 'string' ? { search: options } : options;
+  if (!(settings.performed ?? value?.performed)) { container.innerHTML = '<p class="not-performed"><strong>Not performed</strong></p>'; return; }
+  const rows = flattenResult(value, { rootPath: settings.rootPath || '$', category: settings.category || 'Result' });
+  const visible = searchResultRows(rows, settings.search);
+  const active = String(settings.search || '').trim().length > 0;
+  container.innerHTML = visible.length ? groupRows(visible) : emptyRowsMessage(active, Boolean(settings.debug));
+  if (settings.statusElement) settings.statusElement.textContent = filterStatus(visible.length, rows.length, { search: settings.search });
+  return { rows, visible, active };
+}
+function filterStatus(visible, total, { search = '', filter = 'all' } = {}) {
+  const query = String(search).trim();
+  if (!query && filter === 'all' && visible === total) return `Showing all ${total} fields`;
+  const details = [];
+  if (query) details.push(`Search: "${query}"`);
+  if (filter !== 'all') details.push(`Filter: ${displayName(filter)}`);
+  return `Showing ${visible} / ${total} fields${details.length ? ` · ${details.join(' · ')}` : ''}`;
+}
+function emptyRowsMessage(active, debug) {
+  if (active) return '<p>No fields match the active search/filter.</p>';
+  return debug ? '<p>Result rendering error: collected data exists but no displayable fields were generated.</p>' : '<p>No displayable fields were generated.</p>';
 }
 function groupRows(rows) { const groups = new Map(); rows.forEach((r) => { if (!groups.has(r.category)) groups.set(r.category, []); groups.get(r.category).push(r); }); return Array.from(groups, ([name, rs]) => `<details id="collector-${name}" open><summary>${displayName(name)} (${rs.length})</summary><dl class="kv-list">${rs.map((r) => `<div><dt>${r.path}</dt><dd><code>${escapeHtml(formatValue(r.value))}</code></dd></div>`).join('')}</dl></details>`).join(''); }
 export function renderComparison(comparison, elements, options = {}) {
