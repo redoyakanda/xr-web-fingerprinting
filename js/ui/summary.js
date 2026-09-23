@@ -1,8 +1,8 @@
 import { countLeafValues, normalizeForJson } from '../utils/normalization.js';
 import { buildFeatureVector } from '../analysis/featureVector.js';
 
-export const SCHEMA_VERSION = '2.0.0';
-export const APPLICATION_VERSION = '1.2.0';
+export const SCHEMA_VERSION = '2.1.0';
+export const APPLICATION_VERSION = '1.3.0';
 export const ETHICS_NOTICE = 'Research prototype: browser-exposed fingerprinting features are collected and compared locally; no uniqueness claims are made.';
 
 export function createCollectionId() {

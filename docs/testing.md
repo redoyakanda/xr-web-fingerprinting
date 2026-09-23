@@ -58,3 +58,6 @@ For **each** configuration below:
 - [ ] Confirm the UI describes similarity only as field equality—not uniqueness or entropy.
 - [ ] Exercise Complete Research Record, Passive Snapshot Only, Traditional Fingerprinting Features, XR Features, Accessibility Passive Features, Extension Artifact Features, Interaction Aggregate Features, Feature Vector, and Comparison Report exports.
 - [ ] Confirm filenames are sanitized, identify participants only by code, and all files are generated locally.
+
+## Interaction task set 2.0.0 validation
+Automated tests cover all sequentiality delta classes and zero preservation, fixed condition-invariant task definitions, condition filenames and notes exclusion, touch aggregation without coordinates, content-free text-key categories, cleanup, and repeat runs. Manual pilot matrices should complete all twenty tasks and finish below the task area for: desktop pointer/SR off, desktop NVDA, iPhone touch/VoiceOver off, and iPhone VoiceOver on. Physical NVDA, VoiceOver, TalkBack, iOS Safari, and Android validation remains manual because these environments are unavailable to the Node test runner. Verify recording stopped, condition/results sections, filenames, and absence of entered content.
