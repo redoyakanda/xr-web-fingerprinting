@@ -9,7 +9,7 @@ import { compareFingerprints } from '../js/ui/comparison.js';
 const collectors={navigator:{supported:true,values:{platform:'test'},warnings:[],errors:[]},accessibilityPreferences:{supported:true,values:{reducedMotion:false},warnings:[],errors:[]},accessibilityEnvironment:{supported:true,values:{},warnings:[],errors:[]},accessibilityAPISurface:{supported:false,values:{},warnings:['unsupported'],errors:[]}};
 const make=()=>buildFingerprint({collectorResults:structuredClone(collectors),startedAt:new Date('2026-09-14T00:00:00.000Z'),endedAt:new Date('2026-09-14T00:00:00.025Z')});
 const first=make(),second=make();
-assert.equal(APPLICATION_VERSION,'1.2.0');
+assert.equal(APPLICATION_VERSION,'1.3.0');
 assert.notEqual(first.metadata.collectionId,second.metadata.collectionId);
 first.passiveSnapshot.collectors.navigator.values.platform='changed';
 assert.equal(second.passiveSnapshot.collectors.navigator.values.platform,'test');

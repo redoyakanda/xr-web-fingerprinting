@@ -7,6 +7,13 @@ export function fingerprintFilename(fingerprint) {
   const id = String(fingerprint.metadata?.collectionId || fingerprint.collectionId || 'no-id').replace(/[^A-Za-z0-9]/g, '').slice(0, 8);
   return sanitizeFilename(`xr-web-study_${timestamp}_${id}.json`);
 }
+
+export function interactionFilename(prefix,groundTruth={},timestamp=new Date().toISOString()) {
+  const component=value=>sanitizeFilename(String(value??'').trim()).replace(/\.json$/i,'')||'unknown';
+  const parts=[prefix,component(groundTruth.participantCode||'participant-unknown'),component(groundTruth.deviceClass),component(groundTruth.assistiveTechnologyCondition),component(groundTruth.screenReader),`trial-${component(groundTruth.trialNumber??'unknown')}`];
+  if(groundTruth.sessionNumber!=null&&groundTruth.sessionNumber!=='')parts.push(`session-${component(groundTruth.sessionNumber)}`);
+  parts.push(timestamp.replace(/[:.]/g,'-'));return sanitizeFilename(`${parts.join('_')}.json`);
+}
 export const EXPORT_TYPES=Object.freeze(['complete','passive','traditional','xr','accessibility-passive','extension','interaction','feature-vector','comparison']);
 export function selectExport(record,type='complete') { const g=record.featureGroups||{}; switch(type){case'passive':return record.passiveSnapshot;case'traditional':return g.traditionalFingerprintFeatures||{};case'xr':return g.xrFeatures||{};case'accessibility-passive':return {accessibilityPreferenceFeatures:g.accessibilityPreferenceFeatures||{},accessibilityEnvironmentFeatures:g.accessibilityEnvironmentFeatures||{},accessibilityAPISurfaceFeatures:g.accessibilityAPISurfaceFeatures||{}};case'extension':return record.extensionArtifactObservation||{performed:false};case'interaction':return record.interactionExperiment?.aggregateFeatures||{};case'feature-vector':return {featureGroups:g};default:return record;} }
 export function buildSummaryExport(fingerprint) {

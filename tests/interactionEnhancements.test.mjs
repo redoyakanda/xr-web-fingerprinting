@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {calculateSequentiality,extractInteractionFeatures} from '../js/experiments/interactionFeatures.js';
+import {interactionFilename} from '../js/export/jsonExport.js';
+import {EXPERIMENT_TASKS,TASK_SET_VERSION} from '../js/experiments/experimentTasks.js';
+const f=a=>calculateSequentiality(a,5);
+assert.equal(f([1,2,3]).sequentialForwardTransitionCount,2);assert.equal(f([1,3]).forwardSkipCount,1);assert.equal(f([3,2]).sequentialBackwardTransitionCount,1);assert.equal(f([5,2]).backwardJumpCount,1);assert.equal(f([2,2]).sameElementRefocusCount,1);
+const zero=f([]);assert.equal(zero.observableSequentialTransitionRatio,0);assert.equal(zero.forwardSkipCount,0);
+const desktop=interactionFilename('interaction-experiment',{participantCode:'P001',deviceClass:'laptop',assistiveTechnologyCondition:'screen-reader',screenReader:'NVDA',trialNumber:2,notes:'NEVER INCLUDE'},'2026-09-22T20:30:00Z');
+assert.match(desktop,/P001_laptop_screen-reader_NVDA_trial-2/);assert.ok(!desktop.includes('NEVER'));
+assert.match(interactionFilename('interaction-features',{participantCode:'P001',deviceClass:'smartphone',assistiveTechnologyCondition:'screen-reader',screenReader:'VoiceOver',trialNumber:1}),/P001_smartphone_screen-reader_VoiceOver_trial-1/);
+const aggregate=extractInteractionFeatures({events:[{type:'pointerdown',pointerType:'touch',taskId:'x'},{type:'keyboard',category:'text-input-key',taskId:'x'}],tasks:[]});assert.equal(aggregate.pointerUsage.pointerTypeCounts.touch,1);assert.equal(JSON.stringify(aggregate).includes('character'),false);
+assert.equal(EXPERIMENT_TASKS.length,20);assert.equal(TASK_SET_VERSION,'2.0.0');console.log('interaction enhancement tests passed');

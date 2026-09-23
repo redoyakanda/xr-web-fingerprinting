@@ -16,7 +16,7 @@ Warnings are non-fatal strings. Errors are structured with collector name, messa
 
 ## Versioning policy
 
-Schema version `2.0.0` is used for the unified Phase D research record. Increment the schema when field meaning or required structure changes.
+Schema version `2.1.0` is used for the unified Phase D research record. Increment the schema when field meaning or required structure changes.
 
 ## Comparison report schema
 
@@ -26,7 +26,7 @@ Reports include comparison timestamp, sanitized source filenames, summary counts
 
 `passiveSnapshot`, `extensionArtifactObservation`, and the reserved `interactionExperiment` are separate top-level sections. The extension section records whether the explicit observation was performed, timestamps, duration, cleanup state, configured duration, and compact `aggregateFeatures`. It is never merged into passive collector values. `js/ui/featureVector.js` exposes those aggregates as `extensionArtifactFeatures`.
 
-## `interactionExperiment` (schema 1.3.0)
+## `interactionExperiment` (schema 2.0.0)
 
 `performed` is false until a completed trial is integrated. A completed object contains researcher-provided `groundTruth` (`assistiveTechnologyCondition`, `screenReader`, `deviceClass`, `browserConditionLabel`, pseudonymous `participantCode`, `trialNumber`, `sessionNumber`, and optional notes), `state: "finished"`, and `timing` with ISO start/finish values and observed `durationMs`.
 
@@ -46,3 +46,10 @@ The canonical record is JSON serializable and contains:
 `null` represents an unavailable/not-applicable scalar; `supported: false` represents absent API capability; structured `errors` represent attempted operations that failed; `performed: false` means the temporal phase did not run. Top-level metadata aliases and `collectors` are retained for compatibility with Phase A-C exports. Research-condition labels live only under interaction `groundTruth` and are never automatically derived.
 
 Selectable exports include the complete record, passive snapshot, traditional, XR, combined passive-accessibility, extension, interaction aggregate, and full feature-vector payloads. Comparison reports are the ninth export. Filenames use `xr-web-study_<UTC>_<collectionID>.json` (with a category prefix for subset exports) and never incorporate participant fields.
+
+## Interaction experiment schema 2.0.0 (application 1.3.0)
+The expanded fixed task set is identified by `taskSetVersion: "2.0.0"`. An interaction result contains `groundTruth`, `experimentConfiguration`, `timing`, twenty task boundary summaries, `aggregateFeatures`, `aggregateFeatures.navigationSequentiality`, `perTaskFeatures`, and `rawEventsIncluded: false`. The research-record schema is `2.1.0`.
+
+Only events whose target is inside `#interaction-task-area` are eligible. Dashboard, metadata, task-management, finish, and result controls are outside that boundary (and management elements are additionally marked `data-experiment-ui`). Typed characters and form values are never included; a printable key becomes only `text-input-key`. Pointer aggregates distinguish mouse, touch, pen, and unknown without coordinates.
+
+Condition-aware interaction filenames use `interaction-experiment_<participant>_<device>_<AT-condition>_<screen-reader>_trial-<n>[_session-<n>]_<UTC>.json`; aggregate and complete exports use `interaction-features_` and `research-record_`. Components are sanitized and notes are excluded. Passive-only naming is unchanged.
