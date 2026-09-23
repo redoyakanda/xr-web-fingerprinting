@@ -18,6 +18,8 @@ Recording starts only after the participant notice is confirmed and the Start co
 
 Focus semantics, navigation-key categories, coarse activations, and throttled coarse scrolling become task summaries and aggregate candidate features only after completion. Raw-event export is disabled by default. Characters, passwords, form values, editable content, pointer coordinates/trajectories, speech, and sensors are excluded even from internal event metadata.
 
+Scrolling is attributed only to the independently scrollable standardized sample webpage (`#interaction-task-area`). Its scroll listener and distance baseline are attached directly to that element. Window/document scrolling used to reach researcher instructions, task controls, Finish, or other dashboard panels is not observed and therefore cannot contribute to scroll aggregates or per-task interaction counts. When the source of movement cannot be attributed to the sample webpage, it is excluded rather than inferred.
+
 No detector or classifier is trained or run. Keyboard-only behavior may resemble screen-reader behavior, so false positives must be tested explicitly. Interaction also differs among NVDA, JAWS, Narrator, VoiceOver, TalkBack, Orca, browsers, devices, and platforms; candidate signals must not be treated as evidence of disability.
 
 ## Phase D controls, ground truth, and future analysis

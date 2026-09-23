@@ -1,7 +1,7 @@
 import { normalizeForJson, stableStringify } from '../utils/normalization.js';
 
 export function stringifyFingerprint(fingerprint) { return JSON.stringify(normalizeForJson(fingerprint), null, 2); }
-export function sanitizeFilename(name) { return String(name).replace(/[^A-Za-z0-9._-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 160) || 'fingerprint.json'; }
+export function sanitizeFilename(name,maximumLength=240) { return String(name).replace(/[^A-Za-z0-9._-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0,maximumLength) || 'fingerprint.json'; }
 export function fingerprintFilename(fingerprint) {
   const timestamp = (fingerprint.metadata?.collectedAtUTC || fingerprint.collectedAtUTC || new Date().toISOString()).replace(/[:.]/g, '-');
   const id = String(fingerprint.metadata?.collectionId || fingerprint.collectionId || 'no-id').replace(/[^A-Za-z0-9]/g, '').slice(0, 8);
@@ -9,10 +9,10 @@ export function fingerprintFilename(fingerprint) {
 }
 
 export function interactionFilename(prefix,groundTruth={},timestamp=new Date().toISOString()) {
-  const component=value=>sanitizeFilename(String(value??'').trim()).replace(/\.json$/i,'')||'unknown';
-  const parts=[prefix,component(groundTruth.participantCode||'participant-unknown'),component(groundTruth.deviceClass),component(groundTruth.assistiveTechnologyCondition),component(groundTruth.screenReader),`trial-${component(groundTruth.trialNumber??'unknown')}`];
-  if(groundTruth.sessionNumber!=null&&groundTruth.sessionNumber!=='')parts.push(`session-${component(groundTruth.sessionNumber)}`);
-  parts.push(timestamp.replace(/[:.]/g,'-'));return sanitizeFilename(`${parts.join('_')}.json`);
+  const component=(value,limit)=>sanitizeFilename(String(value??'').trim(),limit).replace(/\.json$/i,'')||'unknown';
+  const parts=[component(prefix,32),component(groundTruth.participantCode||'participant-unknown',32),component(groundTruth.deviceClass,24),component(groundTruth.assistiveTechnologyCondition,32),component(groundTruth.screenReader,24),`trial-${component(groundTruth.trialNumber??'unknown',16)}`];
+  if(groundTruth.sessionNumber!=null&&groundTruth.sessionNumber!=='')parts.push(`session-${component(groundTruth.sessionNumber,16)}`);
+  parts.push(component(timestamp.replace(/[:.]/g,'-'),32));return sanitizeFilename(`${parts.join('_')}.json`,240);
 }
 export const EXPORT_TYPES=Object.freeze(['complete','passive','traditional','xr','accessibility-passive','extension','interaction','feature-vector','comparison']);
 export function selectExport(record,type='complete') { const g=record.featureGroups||{}; switch(type){case'passive':return record.passiveSnapshot;case'traditional':return g.traditionalFingerprintFeatures||{};case'xr':return g.xrFeatures||{};case'accessibility-passive':return {accessibilityPreferenceFeatures:g.accessibilityPreferenceFeatures||{},accessibilityEnvironmentFeatures:g.accessibilityEnvironmentFeatures||{},accessibilityAPISurfaceFeatures:g.accessibilityAPISurfaceFeatures||{}};case'extension':return record.extensionArtifactObservation||{performed:false};case'interaction':return record.interactionExperiment?.aggregateFeatures||{};case'feature-vector':return {featureGroups:g};default:return record;} }
