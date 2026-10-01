@@ -7,6 +7,7 @@ import {interactionFilename} from '../js/export/jsonExport.js';
 
 const markup=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const panel=fs.readFileSync(new URL('../js/ui/experimentPanel.js',import.meta.url),'utf8');
+const styles=fs.readFileSync(new URL('../css/style.css',import.meta.url),'utf8');
 assert.match(markup,/id="experiment-finish-bottom"[^>]*>Finish Experiment<\/button>/);
 assert.match(markup,/id="experiment-task-title" tabindex="-1"/);
 assert.match(markup,/id="experiment-end-heading" tabindex="-1"/);
@@ -16,6 +17,10 @@ assert.match(panel,/function cleanup\(hide=true\)[\s\S]*?end\.hidden=true/);
 assert.match(panel,/#experiment-reset'[\s\S]*?end\.hidden=true;q\('#experiment-finish-bottom'\)\.disabled=true/);
 assert.doesNotMatch(panel,/end\.hidden=!allComplete|disabled=!allComplete/);
 assert.match(panel,/#experiment-end-heading/);
+const environmentRule=styles.match(/\.experiment-environment\{([^}]*)\}/)?.[1]||'';
+assert.doesNotMatch(environmentRule,/(?:max-)?height\s*:/,'sample page has no restrictive height');
+assert.doesNotMatch(environmentRule,/overflow\s*:\s*(?:auto|scroll)/,'sample page does not create an independent scroller');
+assert.match(environmentRule,/width\s*:\s*100%/,'sample page uses the available content width');
 
 class Target { constructor(){this.handlers=new Map();this.scrollTop=0;this.scrollY=0;this.activeElement=null;} addEventListener(type,handler){if(!this.handlers.has(type))this.handlers.set(type,new Set());this.handlers.get(type).add(handler);} removeEventListener(type,handler){this.handlers.get(type)?.delete(handler);} emit(type,event={}){for(const handler of this.handlers.get(type)||[])handler(event);} count(){return [...this.handlers.values()].reduce((sum,set)=>sum+set.size,0);} }
 const documentTarget=new Target(),sampleArea=new Target(),managementTarget={tagName:'BUTTON',id:'experiment-finish-bottom',getAttribute:()=>null,closest:selector=>selector==='[data-experiment-ui]'?{}:null};
@@ -24,13 +29,15 @@ sampleArea.querySelectorAll=()=>[];
 sampleArea.sampleControl={tagName:'BUTTON',id:'sample',tabIndex:0,getAttribute:()=>null,closest:()=>null};
 let tick=0;
 const recorder=new InteractionRecorder({eventTarget:documentTarget,clock:()=>tick,wallClock:()=>new Date(tick).toISOString()});
-recorder.setTaskArea(sampleArea);recorder.prepare();recorder.startRecording();recorder.setCurrentTask('skip');
+recorder.setTaskArea(sampleArea,documentTarget);recorder.prepare();recorder.startRecording();recorder.setCurrentTask('skip');
 documentTarget.emit('focusin',{target:managementTarget});
 assert.equal(recorder.events.length,0,'programmatic management focus is excluded');
-documentTarget.scrollY=900;documentTarget.emit('scroll');
+documentTarget.scrollY=900;recorder.recordScrollEvent();
 assert.equal(recorder.events.length,0,'dashboard scrolling is not observed');
-sampleArea.scrollTop=120;recorder.recordScrollEvent();
-assert.equal(recorder.events.at(-1).absoluteDistance,120,'sample-page scrolling is observed');
+documentTarget.emit('wheel',{target:sampleArea.sampleControl});documentTarget.scrollY=1020;recorder.recordScrollEvent();
+assert.equal(recorder.events.at(-1).absoluteDistance,120,'sample-origin document scrolling is observed');
+documentTarget.emit('wheel',{target:managementTarget});documentTarget.scrollY=1100;recorder.recordScrollEvent();
+assert.equal(recorder.events.at(-1).absoluteDistance,120,'management scrolling is excluded even while the sample page is visible');
 const eventsBeforeFinishActivation=recorder.events.length;
 documentTarget.emit('click',{target:managementTarget,pointerType:'mouse',detail:1});
 assert.equal(recorder.events.length,eventsBeforeFinishActivation,'Finish activation is excluded');
